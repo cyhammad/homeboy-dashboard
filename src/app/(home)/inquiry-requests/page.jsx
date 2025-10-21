@@ -5,12 +5,26 @@ import DetailsModal from "./_components/DetailsModal";
 
 import { useRouter } from "next/navigation";
 import { useModal } from "@/context/ModalContext";
+import { useInquiryRequests } from "@/hooks/useInquiryRequests";
 
 const Bookings = () => {
   const [showModal, setShowModal] = useState(false);
+  const [selectedInquiry, setSelectedInquiry] = useState(null);
   const { openModal, closeModal } = useModal();
   const router = useRouter();
-  const toggleModal = () => {
+  
+  const { 
+    inquiries, 
+    loading, 
+    error, 
+    updateStatus,
+    formatDate,
+    getUserInitials,
+    totalCount
+  } = useInquiryRequests();
+  
+  const toggleModal = (inquiry = null) => {
+    setSelectedInquiry(inquiry);
     setShowModal(true);
     openModal();
   };
@@ -38,15 +52,35 @@ const Bookings = () => {
             <div className="flex items-center justify-between py-4 border-b border-b-black/20">
               <p className="font-semibold text-black/60">Inquiry Requests</p>
             </div>
-            <DetailsTable setShowModal={toggleModal} />
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                <p className="ml-2 text-gray-600">Loading inquiries...</p>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center py-8">
+                <p className="text-red-600">Error loading inquiries: {error}</p>
+              </div>
+            ) : (
+              <DetailsTable 
+                setShowModal={toggleModal} 
+                inquiries={inquiries}
+                updateStatus={updateStatus}
+                formatDate={formatDate}
+                getUserInitials={getUserInitials}
+              />
+            )}
           </div>
         </div>
       </div>
       {showModal && (
         <div className="p-4">
           <DetailsModal
+            inquiry={selectedInquiry}
+            updateStatus={updateStatus}
             onclose={() => {
               setShowModal(false);
+              setSelectedInquiry(null);
               closeModal();
             }}
           />

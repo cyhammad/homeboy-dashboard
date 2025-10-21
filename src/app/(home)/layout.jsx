@@ -3,13 +3,14 @@ import React from "react";
 import Header from "@/components/Header/Header";
 import Sidebar from "@/components/sidebar/Sidebar";
 import { useModal } from "@/context/ModalContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 const AdminLayout = ({
   children
 }) => {
   const { isModalOpen } = useModal();
   return (
-    <>
+    <ProtectedRoute>
       {isModalOpen && (
         <div className="min-h-screen bg-black/20 w-full absolute z-10"></div>
       )}
@@ -22,7 +23,7 @@ const AdminLayout = ({
           {children}
         </div>
       </div>
-    </>
+    </ProtectedRoute>
   );
 };
 

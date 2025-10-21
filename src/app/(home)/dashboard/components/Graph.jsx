@@ -55,8 +55,93 @@ const CustomOverviewTooltip = ({ active, payload }) => {
   return null;
 };
 
-const DashboardUI = () => {
-  const overviewData = mockOverviewData;
+const DashboardUI = ({ data }) => {
+  // Generate chart data from Firebase data
+  const generateChartData = (users, inquiries) => {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+
+    const currentDate = new Date();
+    const chartData = [];
+
+    console.log('Generating chart data with:', { users: users?.length, inquiries: inquiries?.length });
+    
+    // Debug: Log sample dates
+    if (users?.length > 0) {
+      console.log('Sample user date:', users[0].createdAt, typeof users[0].createdAt);
+    }
+    if (inquiries?.length > 0) {
+      console.log('Sample inquiry date:', inquiries[0].requestedAt || inquiries[0].createdAt, typeof (inquiries[0].requestedAt || inquiries[0].createdAt));
+    }
+
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const monthName = months[date.getMonth()];
+      
+      // Count users created in this month
+      const monthUsers = users?.filter(user => {
+        if (!user.createdAt) return false;
+        let userDate;
+        
+        // Handle different date formats
+        if (user.createdAt.toDate) {
+          // Firestore timestamp
+          userDate = user.createdAt.toDate();
+        } else {
+          // String date
+          userDate = new Date(user.createdAt);
+        }
+        
+        const isMatch = userDate.getMonth() === date.getMonth() && 
+               userDate.getFullYear() === date.getFullYear();
+        if (isMatch) {
+          console.log(`User found in ${monthName}:`, user, 'Date:', userDate);
+        }
+        return isMatch;
+      }).length || 0;
+
+      // Count inquiries created in this month
+      const monthInquiries = inquiries?.filter(inquiry => {
+        const dateField = inquiry.requestedAt || inquiry.createdAt;
+        if (!dateField) return false;
+        
+        let inquiryDate;
+        
+        // Handle different date formats
+        if (dateField.toDate) {
+          // Firestore timestamp
+          inquiryDate = dateField.toDate();
+        } else {
+          // String date
+          inquiryDate = new Date(dateField);
+        }
+        
+        const isMatch = inquiryDate.getMonth() === date.getMonth() && 
+               inquiryDate.getFullYear() === date.getFullYear();
+        if (isMatch) {
+          console.log(`Inquiry found in ${monthName}:`, inquiry, 'Date:', inquiryDate);
+        }
+        return isMatch;
+      }).length || 0;
+
+      chartData.push({
+        name: monthName,
+        users: monthUsers,
+        inquiries: monthInquiries
+      });
+    }
+
+    console.log('Generated chart data:', chartData);
+    return chartData;
+  };
+
+  const overviewData = data ? generateChartData(data.users, data.inquiries) : mockOverviewData;
+  
+  // If the generated data is all zeros, use mock data as fallback
+  const hasData = overviewData.some(item => item.users > 0 || item.inquiries > 0);
+  const finalData = hasData ? overviewData : mockOverviewData;
 
   return (
     <div>
@@ -77,7 +162,7 @@ const DashboardUI = () => {
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
-                data={overviewData}
+                data={finalData}
                 margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
               >
                 <CartesianGrid

@@ -21,7 +21,7 @@ const Sidebar = () => {
       icon: (
         <DashboardIcon
           size={20}
-          color={pathname.includes("/dashboard") ? "white" : "black"}
+          color={pathname.includes("/dashboard") ? "gray" : "black"}
         />
       ),
     },
@@ -31,7 +31,7 @@ const Sidebar = () => {
       icon: (
         <ListingIcon
           size={20}
-          color={pathname.includes("/listing-requests") ? "white" : "black"}
+          color={pathname.includes("/listing-requests") ? "gray" : "black"}
         />
       ),
     },
@@ -41,7 +41,7 @@ const Sidebar = () => {
       icon: (
         <LocationIcon
           size={20}
-          color={pathname.includes("/inquiry-requests") ? "white" : "black"}
+          color={pathname.includes("/inquiry-requests") ? "gray" : "black"}
         />
       ),
     },
@@ -70,7 +70,7 @@ const Sidebar = () => {
                 key={link.href}
                 href={link.href}
                 className={`relative flex-col md:flex-row text-sm flex items-center px-2 py-3 gap-4 rounded-lg ${
-                  pathname.includes(link.href) ? "bg-primary text-white" : ""
+                  pathname.includes(link.href) ? "bg-primary text-gray-600" : ""
                 }`}
               >
                 <span>{link.icon}</span>

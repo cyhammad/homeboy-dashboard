@@ -2,6 +2,8 @@
 import { Geist, Geist_Mono, Sora } from "next/font/google";
 import "./globals.css";
 import { ModalProvider } from "@/context/ModalContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { FirebaseProvider } from "@/context/FirebaseContext";
 
 const sora = Sora({
   variable: "--font-sora",
@@ -31,7 +33,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} antialiased`}
       >
-        <ModalProvider>{children}</ModalProvider>
+        <AuthProvider>
+          <FirebaseProvider>
+            <ModalProvider>{children}</ModalProvider>
+          </FirebaseProvider>
+        </AuthProvider>
       </body>
     </html>
   );

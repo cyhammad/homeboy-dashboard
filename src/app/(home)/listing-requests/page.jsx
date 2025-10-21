@@ -7,14 +7,28 @@ import CancelledTable from "./_components/CancelledTable";
 import { useModal } from "@/context/ModalContext";
 import PendingTable from "./_components/PendingTable";
 import CreateModal from "./_components/CreateModal";
+import { useListingRequests } from "@/hooks/useListingRequests";
 
 const ListingRequests = () => {
   const [currentButton, setCurrentButton] = useState("Approved");
   const [showModal, setShowModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedListing, setSelectedListing] = useState(null);
   const { openModal, closeModal } = useModal();
+  
+  const { 
+    listings, 
+    loading, 
+    error, 
+    getListingsByStatus, 
+    updateStatus,
+    approvedCount,
+    pendingCount,
+    rejectedCount 
+  } = useListingRequests();
 
-  const toggleModal = () => {
+  const toggleModal = (listing = null) => {
+    setSelectedListing(listing);
     setShowModal(true);
     openModal();
   };
@@ -77,14 +91,39 @@ const ListingRequests = () => {
                 </p>
               </div>
             </div>
-            {currentButton == "Approved" && (
-              <DetailsTable setShowModal={toggleModal} />
-            )}
-            {currentButton == "Pending" && (
-              <PendingTable setShowModal={toggleModal} />
-            )}
-            {currentButton == "Rejected" && (
-              <CancelledTable setShowModal={toggleModal} />
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                <p className="ml-2 text-gray-600">Loading listings...</p>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center py-8">
+                <p className="text-red-600">Error loading listings: {error}</p>
+              </div>
+            ) : (
+              <>
+                {currentButton == "Approved" && (
+                  <DetailsTable 
+                    setShowModal={(listing) => toggleModal(listing)} 
+                    listings={getListingsByStatus('approved')}
+                    updateStatus={updateStatus}
+                  />
+                )}
+                {currentButton == "Pending" && (
+                  <PendingTable 
+                    setShowModal={(listing) => toggleModal(listing)} 
+                    listings={getListingsByStatus('pending')}
+                    updateStatus={updateStatus}
+                  />
+                )}
+                {currentButton == "Rejected" && (
+                  <CancelledTable 
+                    setShowModal={(listing) => toggleModal(listing)} 
+                    listings={getListingsByStatus('rejected')}
+                    updateStatus={updateStatus}
+                  />
+                )}
+              </>
             )}
           </div>
         </div>
@@ -93,8 +132,11 @@ const ListingRequests = () => {
         <div className="p-4">
           <DetailsModal
             status={currentButton}
+            listing={selectedListing}
+            updateStatus={updateStatus}
             onclose={() => {
               setShowModal(false);
+              setSelectedListing(null);
               closeModal();
             }}
           />

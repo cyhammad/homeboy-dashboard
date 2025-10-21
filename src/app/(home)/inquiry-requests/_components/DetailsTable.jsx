@@ -1,7 +1,7 @@
 import React from "react";
 import ArrowRight from "@/assets/icons/ArrowRight";
 
-const DetailsTable = ({ setShowModal }) => {
+const DetailsTable = ({ setShowModal, inquiries = [], formatDate, getUserInitials }) => {
   const tableData = {
     head: [
       {
@@ -29,26 +29,6 @@ const DetailsTable = ({ setShowModal }) => {
         width: "flex-[2]",
       },
     ],
-    body: [
-      {
-        customer: "Cahaya Dewi 1",
-        email: "cahaya@gmail.com",
-        phone: "+13349909803",
-        requestDate: "08/09/23",
-      },
-      {
-        customer: "Cahaya Dewi 2",
-        email: "cahaya@gmail.com",
-        phone: "+13349009803",
-        requestDate: "08/09/23",
-      },
-      {
-        customer: "Cahaya Dewi 3",
-        email: "cahaya@gmail.com",
-        phone: "+13349301803",
-        requestDate: "08/09/23",
-      },
-    ],
   };
   return (
     <div>
@@ -67,42 +47,48 @@ const DetailsTable = ({ setShowModal }) => {
               </div>
             </div>
             <div className="text-[#7A7C7F] text-sm">
-              {tableData.body.map((item, index) => {
-                return (
-                  <div
-                    key={index}
-                    className={`border-b flex border-b-black/10 py-4 px-4`}
-                  >
-                    <div className={`${tableData.head[0].width}`}>
-                      {index + 1}.
-                    </div>
+              {inquiries.length === 0 ? (
+                <div className="flex items-center justify-center py-8">
+                  <p className="text-gray-500">No inquiry requests found</p>
+                </div>
+              ) : (
+                inquiries.map((inquiry, index) => {
+                  return (
                     <div
-                      className={`${tableData.head[1].width} flex items-center gap-2`}
+                      key={inquiry.id}
+                      className={`border-b flex border-b-black/10 py-4 px-4`}
                     >
-                      <p className="bg-primary rounded-full w-7 h-7 text-xs items-center text-white justify-center flex">
-                        CD
-                      </p>
-                      <p>{item.customer}</p>
+                      <div className={`${tableData.head[0].width}`}>
+                        {index + 1}.
+                      </div>
+                      <div
+                        className={`${tableData.head[1].width} flex items-center gap-2`}
+                      >
+                        <p className="bg-primary rounded-full w-7 h-7 text-xs items-center text-white justify-center flex">
+                          {getUserInitials(inquiry.inquirerName)}
+                        </p>
+                        <p>{inquiry.inquirerName || 'Inquirer'}</p>
+                      </div>
+                      <div className={`${tableData.head[2].width}`}>
+                        {inquiry.inquirerEmail || 'N/A'}
+                      </div>
+                      <div className={`${tableData.head[3].width}`}>
+                        {inquiry.inquirerPhone || 'N/A'}
+                      </div>
+                      <div className={`${tableData.head[4].width}`}>
+                        {formatDate(inquiry.createdAt)}
+                      </div>
+                      <div
+                        onClick={() => setShowModal(inquiry)}
+                        className={`${tableData.head[5].width} gap-1 font-semibold flex items-center cursor-pointer text-primary`}
+                      >
+                        View Details
+                        <ArrowRight size={20} />
+                      </div>
                     </div>
-                    <div className={`${tableData.head[1].width}`}>
-                      {item.email}
-                    </div>
-                    <div className={`${tableData.head[1].width}`}>
-                      {item.phone}
-                    </div>
-                    <div className={`${tableData.head[1].width}`}>
-                      {item.requestDate}
-                    </div>
-                    <div
-                      onClick={setShowModal}
-                      className={`${tableData.head[5].width} gap-1 font-semibold flex items-center cursor-pointer text-primary`}
-                    >
-                      View Details
-                      <ArrowRight size={20} />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
