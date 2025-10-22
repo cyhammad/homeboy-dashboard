@@ -2,19 +2,44 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { isAuthenticatedViaCookie } from '@/lib/cookies';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading, isAuthenticated } = useAuth();
   const router = useRouter();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/login');
-    }
+    const checkAuthentication = () => {
+      // First check if we have a valid cookie
+      const hasValidCookie = isAuthenticatedViaCookie();
+      
+      if (hasValidCookie) {
+        console.log('Valid auth cookie found, allowing access');
+        setIsCheckingAuth(false);
+        return;
+      }
+      
+      // If no valid cookie and Firebase auth is not loaded yet, wait
+      if (loading) {
+        return;
+      }
+      
+      // If no valid cookie and no Firebase user, redirect to login
+      if (!isAuthenticated) {
+        console.log('No valid authentication found, redirecting to login');
+        router.push('/login');
+        return;
+      }
+      
+      setIsCheckingAuth(false);
+    };
+
+    checkAuthentication();
   }, [loading, isAuthenticated, router]);
 
-  if (loading) {
+  if (loading || isCheckingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -25,7 +50,7 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !isAuthenticatedViaCookie()) {
     return null;
   }
 

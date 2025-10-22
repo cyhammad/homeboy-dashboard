@@ -7,11 +7,6 @@ const NotificationRow = ({ notification, formatTimeAgo, onNotificationAction }) 
   const router = useRouter();
 
   const handleNotificationClick = () => {
-    // Mark as read when clicked
-    if (!notification.isSeen && !notification.read) {
-      onNotificationAction(notification.id, 'read');
-    }
-
     // Navigate based on notification type and data
     if (notification.data?.type === 'listing' || notification.title?.toLowerCase().includes('listing')) {
       router.push('/listing-requests');
@@ -26,19 +21,15 @@ const NotificationRow = ({ notification, formatTimeAgo, onNotificationAction }) 
   };
 
   const handleAction = (action) => {
-    if (action === 'read') {
-      onNotificationAction(notification.id, 'read');
+    if (action === 'approve') {
+      onNotificationAction(notification.id, 'approve');
+    } else if (action === 'reject') {
+      onNotificationAction(notification.id, 'reject');
     }
   };
 
   return (
-    <div className={`${
-      (notification.isSeen === false && notification.read === false) 
-        ? 'bg-blue-50' 
-        : (notification.isSeen || notification.read) 
-          ? 'bg-green-50' 
-          : ''
-    }`}>
+    <div className="bg-white">
       <div className="flex gap-2 mx-6 text-sm border-b border-b-black/10">
         <div className="flex-1">
           <div 
@@ -53,25 +44,21 @@ const NotificationRow = ({ notification, formatTimeAgo, onNotificationAction }) 
               <p className="text-gray-600">{notification.description}</p>
               <p className="font-semibold text-new-black">{formatTimeAgo(notification.createdAt)}</p>
             </div>
-            {(notification.isSeen === false && notification.read === false) && (
-              <div className="w-2 h-2 bg-blue-500 rounded-full mt-1"></div>
-            )}
-            {(notification.isSeen || notification.read) && (
-              <div className="w-2 h-2 bg-green-500 rounded-full mt-1"></div>
-            )}
           </div>
         </div>
         <div className="items-center flex text-xs">
           <div className="flex gap-1">
             <button
-              onClick={() => handleAction('read')}
-              className={`px-3 py-2 rounded-sm text-white cursor-pointer ${
-                notification.isSeen || notification.read 
-                  ? 'bg-green-500 hover:bg-green-600' 
-                  : 'bg-primary hover:bg-primary/80'
-              }`}
+              onClick={() => handleAction('reject')}
+              className="px-4 py-2 rounded-sm text-white bg-red-500 cursor-pointer hover:bg-red-500/80"
             >
-              {notification.isSeen || notification.read ? 'Seen' : 'Mark as Read'}
+              Reject
+            </button>
+            <button
+              onClick={() => handleAction('approve')}
+              className="px-4 py-2 rounded-sm text-white bg-primary cursor-pointer hover:bg-primary/80"
+            >
+              Approve
             </button>
           </div>
         </div>

@@ -4,6 +4,8 @@ import Header from "@/components/Header/Header";
 import Sidebar from "@/components/sidebar/Sidebar";
 import { useModal } from "@/context/ModalContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminNotificationInitializer from "@/components/AdminNotificationInitializer";
+import AdminFCMInitializer from "@/components/AdminFCMInitializer";
 
 const AdminLayout = ({
   children
@@ -11,6 +13,8 @@ const AdminLayout = ({
   const { isModalOpen } = useModal();
   return (
     <ProtectedRoute>
+      <AdminNotificationInitializer />
+      <AdminFCMInitializer />
       {isModalOpen && (
         <div className="min-h-screen bg-black/20 w-full absolute z-10"></div>
       )}

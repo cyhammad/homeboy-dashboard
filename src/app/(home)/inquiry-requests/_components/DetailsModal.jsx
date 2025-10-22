@@ -7,6 +7,8 @@ import React, { useState } from "react";
 
 import { IMAGES } from "@/assets";
 import { CgClose } from "react-icons/cg";
+import adminNotificationService from "@/lib/adminNotificationService";
+import { useNotifications } from "@/context/NotificationContext";
 
 const Popup = ({ onClose, img }) => {
   return (
@@ -29,6 +31,7 @@ const DetailsModal = ({
   const [showImage, setShowImage] = useState(false);
   const [selectedImage, setSelectedImage] = useState("");
   const [updating, setUpdating] = useState(false);
+  const { sendNotification } = useNotifications();
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -55,6 +58,23 @@ const DetailsModal = ({
     try {
       setUpdating(true);
       await updateStatus(inquiry.id, newStatus);
+      
+      // Send FCM notification to admin's mobile app about inquiry action
+      await adminNotificationService.notifyInquiryAction(inquiry, newStatus);
+      
+      // Send notification to user about status change
+      if (inquiry.userId) {
+        await sendNotification(inquiry.userId, {
+          title: `Inquiry ${newStatus}`,
+          body: `Your inquiry has been ${newStatus.toLowerCase()}`,
+          data: {
+            inquiryId: inquiry.id,
+            status: newStatus,
+            type: 'inquiry_status_change'
+          }
+        });
+      }
+      
       onclose(); // Close modal after successful update
     } catch (error) {
       console.error('Error updating status:', error);
@@ -207,6 +227,26 @@ const DetailsModal = ({
                       className="object-cover rounded cursor-pointer hover:opacity-80"
                     />
                   ))}
+                </div>
+              )}
+              
+              {/* Action Buttons */}
+              {inquiry.status?.toLowerCase() === 'pending' && (
+                <div className="flex gap-2 py-4 border-t border-t-black/10">
+                  <button
+                    onClick={() => handleStatusUpdate('rejected')}
+                    disabled={updating}
+                    className="px-4 py-2 rounded-sm text-white bg-red-500 cursor-pointer hover:bg-red-500/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {updating ? 'Updating...' : 'Reject'}
+                  </button>
+                  <button
+                    onClick={() => handleStatusUpdate('approved')}
+                    disabled={updating}
+                    className="px-4 py-2 rounded-sm text-white bg-green-500 cursor-pointer hover:bg-green-500/80 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {updating ? 'Updating...' : 'Approve'}
+                  </button>
                 </div>
               )}
             </div>

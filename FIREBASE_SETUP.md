@@ -34,12 +34,21 @@ This project has been configured to work with Firebase Authentication and Firest
 4. Register your app with a nickname
 5. Copy the Firebase configuration object
 
-## 5. Set Up Environment Variables
+## 5. Enable Cloud Messaging (FCM)
+
+1. In your Firebase project, go to "Cloud Messaging" in the left sidebar
+2. Click "Get started" if not already enabled
+3. Go to "Cloud Messaging" > "Web configuration"
+4. Generate a new Web Push certificate (VAPID key)
+5. Copy the VAPID key for later use
+
+## 6. Set Up Environment Variables
 
 1. Create a `.env.local` file in your project root
 2. Add the following environment variables with your Firebase config values:
 
 ```env
+# Firebase Client Configuration
 NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key_here
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
@@ -47,11 +56,19 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
+NEXT_PUBLIC_FIREBASE_VAPID_KEY=your_vapid_key_here
+
+# Firebase Admin Configuration (for server-side)
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_PRIVATE_KEY_ID=your_private_key_id
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nyour_private_key_here\n-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL=your_service_account_email
+FIREBASE_CLIENT_ID=your_client_id
 ```
 
 Replace the placeholder values with your actual Firebase configuration values.
 
-## 6. Security Rules (Optional)
+## 7. Security Rules (Optional)
 
 For production, you should update your Firestore security rules:
 
@@ -70,7 +87,7 @@ service cloud.firestore {
 }
 ```
 
-## 7. Test the Setup
+## 8. Test the Setup
 
 1. Start your development server: `npm run dev`
 2. Navigate to `/sign-up` to create a new account
@@ -86,6 +103,9 @@ service cloud.firestore {
 - ✅ Authentication context
 - ✅ Form validation
 - ✅ Error handling
+- ✅ FCM Push Notifications (Web to Mobile)
+- ✅ Admin notification system
+- ✅ Real-time status updates
 
 ## File Structure
 

@@ -14,7 +14,13 @@ import {
   serverTimestamp,
   writeBatch
 } from 'firebase/firestore';
-import { db, COLLECTIONS, STATUS, ROLES } from './firebase';
+import { 
+  ref, 
+  uploadBytes, 
+  getDownloadURL, 
+  deleteObject 
+} from 'firebase/storage';
+import { db, storage, COLLECTIONS, STATUS, ROLES } from './firebase';
 
 // ==================== USER OPERATIONS ====================
 
@@ -570,6 +576,96 @@ export const batchUpdate = async (updates, collectionName) => {
     await batch.commit();
   } catch (error) {
     console.error('Error batch updating:', error);
+    throw error;
+  }
+};
+
+// ==================== FILE UPLOAD OPERATIONS ====================
+
+/**
+ * Upload a file to Firebase Storage
+ * @param {File} file - File to upload
+ * @param {string} path - Storage path (e.g., 'listings/images')
+ * @returns {Promise<string>} Download URL
+ */
+export const uploadFile = async (file, path) => {
+  try {
+    const fileName = `${Date.now()}_${file.name}`;
+    const fileRef = ref(storage, `${path}/${fileName}`);
+    
+    await uploadBytes(fileRef, file);
+    const downloadURL = await getDownloadURL(fileRef);
+    
+    return downloadURL;
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    throw error;
+  }
+};
+
+/**
+ * Upload multiple files to Firebase Storage
+ * @param {File[]} files - Array of files to upload
+ * @param {string} path - Storage path (e.g., 'listings/images')
+ * @returns {Promise<string[]>} Array of download URLs
+ */
+export const uploadMultipleFiles = async (files, path) => {
+  try {
+    const uploadPromises = files.map(file => uploadFile(file, path));
+    const downloadURLs = await Promise.all(uploadPromises);
+    
+    return downloadURLs;
+  } catch (error) {
+    console.error('Error uploading multiple files:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a file from Firebase Storage
+ * @param {string} downloadURL - Download URL of the file to delete
+ * @returns {Promise<void>}
+ */
+export const deleteFile = async (downloadURL) => {
+  try {
+    const fileRef = ref(storage, downloadURL);
+    await deleteObject(fileRef);
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create a listing with image uploads
+ * @param {Object} listingData - Listing data
+ * @param {File[]} imageFiles - Array of image files
+ * @returns {Promise<Object>} Created listing document
+ */
+export const createListingWithImages = async (listingData, imageFiles = []) => {
+  try {
+    let imageUrls = [];
+    
+    // Upload images if provided
+    if (imageFiles.length > 0) {
+      imageUrls = await uploadMultipleFiles(imageFiles, 'listings/images');
+    }
+    
+    // Create listing document
+    const listingDoc = {
+      ...listingData,
+      imageUrls,
+      status: STATUS.PENDING,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+    
+    const listingsRef = collection(db, COLLECTIONS.LISTINGS);
+    const docRef = await addDoc(listingsRef, listingDoc);
+    
+    return { id: docRef.id, ...listingDoc };
+  } catch (error) {
+    console.error('Error creating listing with images:', error);
     throw error;
   }
 };

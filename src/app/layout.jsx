@@ -4,6 +4,7 @@ import "./globals.css";
 import { ModalProvider } from "@/context/ModalContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { FirebaseProvider } from "@/context/FirebaseContext";
+import { NotificationProvider } from "@/context/NotificationContext";
 
 const sora = Sora({
   variable: "--font-sora",
@@ -35,7 +36,9 @@ export default function RootLayout({
       >
         <AuthProvider>
           <FirebaseProvider>
-            <ModalProvider>{children}</ModalProvider>
+            <NotificationProvider>
+              <ModalProvider>{children}</ModalProvider>
+            </NotificationProvider>
           </FirebaseProvider>
         </AuthProvider>
       </body>

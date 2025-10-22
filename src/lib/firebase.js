@@ -4,6 +4,7 @@ import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
+import { getMessaging, isSupported } from 'firebase/messaging';
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -31,6 +32,9 @@ export const storage = getStorage(app);
 
 // Initialize Firebase Analytics (only in browser)
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
+
+// Initialize Firebase Messaging (only in browser)
+export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 
 // Connect to Firebase emulators in development
 if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {

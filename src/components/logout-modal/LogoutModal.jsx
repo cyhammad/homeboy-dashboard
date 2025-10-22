@@ -2,9 +2,21 @@
 import { useRouter } from "next/navigation";
 import React from "react";
 import { BiTrash } from "react-icons/bi";
+import { useAuth } from "@/context/AuthContext";
 
 const LogoutModal = ({ onclose }) => {
   const router = useRouter();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      onclose();
+      router.push('/login');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
   return (
     <>
       <div className=" z-20 absolute justify-end flex top-1/3 left-1/3 mx-auto rounded-2xl bg-white">
@@ -38,9 +50,7 @@ const LogoutModal = ({ onclose }) => {
                   Cancel
                 </p>
                 <p
-                  onClick={() => {
-                    router.push("/login");
-                  }}
+                  onClick={handleLogout}
                   className="bg-primary w-full hover:bg-primary/90 text-center cursor-pointer text-white px-3 py-2 rounded-xl "
                 >
                   Logout

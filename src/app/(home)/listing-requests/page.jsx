@@ -44,12 +44,13 @@ const ListingRequests = () => {
                 Requests
               </p>
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
               <p onClick={() =>{setShowCreateModal(true); openModal()}} className="flex bg-primary text-sm hover:bg-primary/90 cursor-pointer text-white px-3 py-2 rounded-xl ">
                 Create Listing
               </p>
             </div>
           </div>
+          
           <div className="flex gap-4 flex-col px-8 py-4 border border-black/10 rounded-2xl bg-white">
             <div className="flex items-center justify-between py-4 border-b border-b-black/20">
               <p className="font-semibold text-black/60">Listing Requests</p>

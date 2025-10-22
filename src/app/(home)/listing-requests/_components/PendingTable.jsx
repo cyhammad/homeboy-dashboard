@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import ArrowRight from "@/assets/icons/ArrowRight";
 import toast from "react-hot-toast";
-import NotificationService from "@/lib/notificationService";
+import { useNotifications } from "@/context/NotificationContext";
+import adminNotificationService from "@/lib/adminNotificationService";
 
 const PendingTable = ({ setShowModal, listings = [], updateStatus }) => {
   const [updating, setUpdating] = useState({});
+  const { sendNotification } = useNotifications();
 
   const tableData = {
     head: [
@@ -40,10 +42,37 @@ const PendingTable = ({ setShowModal, listings = [], updateStatus }) => {
       setUpdating(prev => ({ ...prev, [listingId]: true }));
       await updateStatus(listingId, newStatus);
       
-      // Send notification to user about status change
+      // Send FCM notification to user about status change
       const listing = listings.find(l => l.id === listingId);
+      if (listing && listing.userId) {
+        await sendNotification(listing.userId, {
+          title: `Listing ${newStatus}`,
+          body: `Your listing "${listing.title}" has been ${newStatus.toLowerCase()}`,
+          data: {
+            listingId: listing.id,
+            status: newStatus,
+            type: 'listing_status_change'
+          }
+        });
+      }
+
+      // Send notification to admin's mobile app about the action
       if (listing) {
-        await NotificationService.notifyListingStatusChange(listing, newStatus);
+        if (newStatus === 'approved') {
+          await adminNotificationService.notifyListingApproved({
+            id: listing.id,
+            title: listing.title,
+            location: listing.location,
+            price: listing.price
+          });
+        } else if (newStatus === 'rejected') {
+          await adminNotificationService.notifyListingRejected({
+            id: listing.id,
+            title: listing.title,
+            location: listing.location,
+            price: listing.price
+          });
+        }
       }
       
       toast.success(`Listing ${newStatus.toLowerCase()} successfully!`);
