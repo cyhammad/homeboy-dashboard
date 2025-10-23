@@ -37,102 +37,75 @@ export const FirebaseProvider = ({ children }) => {
     if (!user) return;
 
     const unsubscribers = [];
+    let isInitialized = false;
+    let connectionTimeout;
 
     const setupRealtimeListeners = () => {
       try {
-        // Users listener
+        // Add throttling and debouncing to prevent excessive requests
+        const throttledUpdate = (callback) => {
+          let timeoutId;
+          let lastUpdate = 0;
+          const throttleDelay = 500; // 500ms throttle
+          
+          return (data) => {
+            const now = Date.now();
+            if (now - lastUpdate < throttleDelay) {
+              clearTimeout(timeoutId);
+              timeoutId = setTimeout(() => {
+                callback(data);
+                lastUpdate = Date.now();
+              }, throttleDelay - (now - lastUpdate));
+            } else {
+              callback(data);
+              lastUpdate = now;
+            }
+          };
+        };
+
+        // Users listener with throttling
         const unsubscribeUsers = listenToCollection(
           COLLECTIONS.USERS,
-          (users) => {
+          throttledUpdate((users) => {
             setData(prev => ({ ...prev, users }));
-          },
+          }),
           { limit: 50 }
         );
         unsubscribers.push(unsubscribeUsers);
 
-        // Listings listener
+        // Listings listener with throttling
         const unsubscribeListings = listenToCollection(
           COLLECTIONS.LISTINGS,
-          (listings) => {
-            console.log('📋 Listings listener triggered with', listings.length, 'listings');
-            console.log('📋 All listings IDs:', listings.map(l => l.id));
-            
+          throttledUpdate((listings) => {
             // Check for new listings and create notifications
             setData(prev => {
               const previousListings = prev.listings || [];
-              console.log('📊 Previous listings count:', previousListings.length);
-              console.log('📊 Current listings count:', listings.length);
               
               // Simple detection: check by ID only
               const newListings = listings.filter(newListing => {
                 const isNewById = !previousListings.some(prevListing => prevListing.id === newListing.id);
-                console.log(`🔍 Checking listing ${newListing.id}: isNew = ${isNewById}`);
                 return isNewById;
               });
               
-              console.log('🆕 New listings detected:', newListings.length);
-              console.log('New listings data:', newListings);
-              
               // Only skip if this is truly the first load (no previous state at all)
               if (prev.listings === undefined && listings.length > 0) {
-                console.log('🚫 First load detected - skipping notification creation');
                 return { ...prev, listings };
               }
               
-              // Create notifications for new listings
-              if (newListings.length > 0) {
-                newListings.forEach(listing => {
-                  // Skip if listing doesn't have required fields
-                  if (!listing.id) {
-                    console.warn('⚠️ Skipping listing notification - missing ID:', listing);
-                    return;
-                  }
-                  
-                  const ownerName = listing.ownerName || listing.owner || 'Property Owner';
-                  const propertyTitle = listing.title || 'Property';
-                  const listingStatus = listing.status || 'pending';
-                  
-                  console.log('🔔 Creating notification for listing:', {
-                    id: listing.id,
-                    title: propertyTitle,
-                    owner: ownerName,
-                    status: listingStatus
-                  });
-                  
-                  createNotification({
-                    title: "New Listing Request",
-                    description: `${ownerName} submitted a new property listing`,
-                    userId: 'admin',
-                    type: 'listing',
-                    data: {
-                      type: 'listing',
-                      listingId: listing.id,
-                      ownerName: ownerName,
-                      propertyTitle: propertyTitle,
-                      status: listingStatus,
-                      source: 'realtime-listener'
-                    },
-                    isSeen: false
-                  }).then(notification => {
-                    console.log('✅ Notification created successfully:', notification.id);
-                  }).catch(error => {
-                    console.error('❌ Error creating listing notification:', error);
-                  });
-                });
-              }
+              // Notifications are now handled by the mobile app directly
+              // No need to create notifications in the realtime listener
               
               return { ...prev, listings };
             });
-          },
+          }),
           { limit: 100 }
         );
         unsubscribers.push(unsubscribeListings);
 
-        // Inquiries listener - use basic query without ordering to avoid field issues
+        // Inquiries listener with throttling
         const unsubscribeInquiries = listenToCollection(
           COLLECTIONS.INQUIRIES,
-          (inquiries) => {
-            console.log('Raw inquiries from listener:', inquiries);
+          throttledUpdate((inquiries) => {
             // Map the inquiry data to match expected structure
             const mappedInquiries = inquiries.map(inquiry => ({
               id: inquiry.id,
@@ -151,7 +124,6 @@ export const FirebaseProvider = ({ children }) => {
               userId: inquiry.userId,
               ...inquiry
             }));
-            console.log('Mapped inquiries from listener:', mappedInquiries);
             
             // Check for new inquiries and create notifications
             setData(prev => {
@@ -160,56 +132,30 @@ export const FirebaseProvider = ({ children }) => {
                 !previousInquiries.some(prevInquiry => prevInquiry.id === newInquiry.id)
               );
               
-              // Create notifications for new inquiries
-              if (newInquiries.length > 0) {
-                newInquiries.forEach(inquiry => {
-                  // Skip if inquiry doesn't have required fields
-                  if (!inquiry.id) {
-                    console.warn('Skipping inquiry notification - missing ID:', inquiry);
-                    return;
-                  }
-                  
-                  const inquirerName = inquiry.inquirerName || inquiry.buyerName || 'Someone';
-                  const propertyId = inquiry.listingId || inquiry.propertyId || inquiry.id;
-                  
-                  createNotification({
-                    title: "New Inquiry",
-                    description: `${inquirerName} is interested in a property`,
-                    userId: 'admin',
-                    type: 'inquiry',
-                    data: {
-                      type: 'inquiry',
-                      inquiryId: inquiry.id,
-                      inquirerName: inquirerName,
-                      propertyId: propertyId,
-                      source: 'realtime-listener'
-                    },
-                    isSeen: false
-                  }).catch(error => {
-                    console.error('Error creating inquiry notification:', error);
-                  });
-                });
-              }
+              
+              // Notifications are now handled by the mobile app directly
+              // No need to create notifications in the realtime listener
               
               return { ...prev, inquiries: mappedInquiries };
             });
-          },
+          }),
           { limit: 100 }
         );
         unsubscribers.push(unsubscribeInquiries);
 
-        // Notifications listener - show all notifications
+        // Notifications listener with throttling
         const unsubscribeNotifications = listenToCollection(
           COLLECTIONS.NOTIFICATIONS,
-          (notifications) => {
+          throttledUpdate((notifications) => {
             setData(prev => ({ ...prev, notifications }));
-          },
+          }),
           { limit: 100 }
         );
         unsubscribers.push(unsubscribeNotifications);
 
         setLoading(false);
         setError(null);
+        isInitialized = true;
       } catch (err) {
         console.error('Error setting up Firebase listeners:', err);
         setError(err.message);
@@ -217,10 +163,14 @@ export const FirebaseProvider = ({ children }) => {
       }
     };
 
+    // Add a small delay to prevent rapid reconnections
+    connectionTimeout = setTimeout(() => {
     setupRealtimeListeners();
+    }, 100);
 
     // Cleanup function
     return () => {
+      clearTimeout(connectionTimeout);
       unsubscribers.forEach(unsubscribe => {
         if (typeof unsubscribe === 'function') {
           unsubscribe();

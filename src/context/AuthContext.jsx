@@ -35,7 +35,6 @@ export const AuthProvider = ({ children }) => {
         const cookieData = getAuthCookie();
         
         if (cookieData && validateCookieData(cookieData)) {
-          console.log('Found valid auth cookie, initializing user state');
           
           // Set user data from cookie
           setUser({
@@ -62,7 +61,6 @@ export const AuthProvider = ({ children }) => {
             console.error('Error updating last login:', error);
           }
         } else {
-          console.log('No valid auth cookie found');
           // Clear any invalid cookie
           if (cookieData) {
             removeAuthCookie();
@@ -139,7 +137,6 @@ export const AuthProvider = ({ children }) => {
       const { logOut } = await import('@/lib/auth');
       await logOut();
       
-      console.log('User logged out successfully');
     } catch (error) {
       console.error('Error during logout:', error);
       // Even if Firebase logout fails, clear local state

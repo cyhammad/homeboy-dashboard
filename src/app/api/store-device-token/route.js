@@ -4,9 +4,6 @@ export async function POST(request) {
   try {
     const { userId, deviceToken, platform = 'mobile', deviceInfo = {} } = await request.json();
 
-    console.log("🟢 Storing device token for user:", userId);
-    console.log("📦 Device token:", deviceToken);
-    console.log("📱 Platform:", platform);
 
     if (!userId || !deviceToken) {
       return NextResponse.json(
@@ -20,7 +17,6 @@ export async function POST(request) {
     const adminApp = (await import("@/lib/firebaseAdmin")).default;
 
     if (!adminApp) {
-      console.error("❌ Firebase Admin not initialized");
       return NextResponse.json(
         {
           success: false,
@@ -46,8 +42,6 @@ export async function POST(request) {
 
     await db.collection("users").doc(userId).set(updateData, { merge: true });
 
-    console.log(`✅ Device token stored successfully for user: ${userId}`);
-
     return NextResponse.json({
       success: true,
       message: "Device token stored successfully",
@@ -55,7 +49,6 @@ export async function POST(request) {
     });
 
   } catch (error) {
-    console.error("❌ Error storing device token:", error);
     return NextResponse.json(
       { success: false, error: "Failed to store device token" },
       { status: 500 }

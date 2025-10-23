@@ -7,6 +7,8 @@ import { BsEyeFill, BsEyeSlashFill } from "react-icons/bs";
 import { signIn } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
+import { useAuth } from "@/context/AuthContext";
+import { useEffect } from "react";
 
 const CustomInput = ({ type, value, onChange, name }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -64,6 +66,14 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, router]);
 
   const handleChange = (e) => {
     setFormData({
@@ -80,7 +90,7 @@ const Login = () => {
     try {
       await signIn(formData.email, formData.password);
       toast.success("Login successful! Welcome back!");
-      router.push("/dashboard");
+      router.push("/");
     } catch (error) {
       const errorMessage = error.message || "Login failed. Please try again.";
       setError(errorMessage);

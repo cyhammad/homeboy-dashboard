@@ -4,8 +4,6 @@ export async function POST(request) {
   try {
     const { userId, notification } = await request.json();
 
-    console.log("🟢 Sending notification to user:", userId);
-    console.log("📦 Notification data:", notification);
 
     if (!userId) {
       return NextResponse.json(
@@ -19,7 +17,6 @@ export async function POST(request) {
     const adminApp = (await import("@/lib/firebaseAdmin")).default;
 
     if (!adminApp) {
-      console.error("❌ Firebase Admin not initialized");
       return NextResponse.json(
         {
           success: false,
@@ -80,7 +77,6 @@ export async function POST(request) {
       );
     }
   } catch (error) {
-    console.error("❌ Error sending notification:", error);
     return NextResponse.json(
       { success: false, error: "Failed to send notification" },
       { status: 500 }

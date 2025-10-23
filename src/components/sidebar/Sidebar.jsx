@@ -16,12 +16,12 @@ const Sidebar = () => {
 
   const links = [
     {
-      href: "/dashboard",
+      href: "/",
       label: "Dashboard",
       icon: (
         <DashboardIcon
           size={20}
-          color={pathname.includes("/dashboard") ? "gray" : "black"}
+          color={pathname === "/" || pathname.includes("/dashboard") ? "gray" : "black"}
         />
       ),
     },

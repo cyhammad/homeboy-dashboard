@@ -190,10 +190,8 @@ export const seedDatabase = async (adminUserId) => {
  */
 export const clearSampleData = async () => {
   try {
-    console.log("🧹 Clearing sample data...");
     // Note: In production, you'd want to be more specific about what to delete
     // This is a placeholder for the clear operation
-    console.log("⚠️ Clear operation not implemented - use Firebase Console or custom function");
   } catch (error) {
     console.error("❌ Error clearing sample data:", error);
     throw error;

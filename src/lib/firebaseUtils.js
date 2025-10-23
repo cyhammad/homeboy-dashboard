@@ -249,11 +249,9 @@ export const getInquiries = async (filters = {}) => {
     try {
       q = query(inquiriesRef, orderBy('requestedAt', 'desc'));
     } catch (orderError) {
-      console.log('requestedAt field not found, trying createdAt:', orderError);
       try {
         q = query(inquiriesRef, orderBy('createdAt', 'desc'));
       } catch (createdAtError) {
-        console.log('createdAt field not found, using basic query:', createdAtError);
         q = query(inquiriesRef);
       }
     }
@@ -267,11 +265,9 @@ export const getInquiries = async (filters = {}) => {
     }
     
     const querySnapshot = await getDocs(q);
-    console.log('Raw inquiry documents:', querySnapshot.docs.length);
     
     const mappedInquiries = querySnapshot.docs.map(doc => {
       const data = doc.data();
-      console.log('Raw inquiry data:', data);
       return {
         id: doc.id,
         inquiryId: doc.id,
@@ -291,7 +287,6 @@ export const getInquiries = async (filters = {}) => {
       };
     });
     
-    console.log('Mapped inquiries:', mappedInquiries);
     return mappedInquiries;
   } catch (error) {
     console.error('Error getting inquiries:', error);
@@ -499,14 +494,12 @@ export const listenToCollection = (collectionName, callback, filters = {}) => {
         try {
           q = query(collectionRef, orderBy('requestedAt', 'desc'));
         } catch (err) {
-          console.log('requestedAt not found for inquiries, trying createdAt');
           q = query(collectionRef, orderBy('createdAt', 'desc'));
         }
       } else {
         q = query(collectionRef, orderBy('createdAt', 'desc'));
       }
     } catch (orderError) {
-      console.log('Ordering failed, using basic query:', orderError);
       q = query(collectionRef);
     }
     
@@ -518,7 +511,10 @@ export const listenToCollection = (collectionName, callback, filters = {}) => {
       q = query(q, limit(filters.limit));
     }
     
-    return onSnapshot(q, (querySnapshot) => {
+    // Add metadata to reduce unnecessary updates
+    return onSnapshot(q, { 
+      includeMetadataChanges: false // Only trigger on actual data changes
+    }, (querySnapshot) => {
       const data = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()

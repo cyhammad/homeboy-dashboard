@@ -31,7 +31,6 @@ export const NotificationProvider = ({ children }) => {
 
         // Check if notifications are supported
         if (!('Notification' in window)) {
-          console.log('This browser does not support notifications');
           setIsInitialized(true);
           return;
         }
@@ -55,7 +54,6 @@ export const NotificationProvider = ({ children }) => {
 
         setIsInitialized(true);
       } catch (error) {
-        console.error('Error initializing device token:', error);
         setIsInitialized(true);
       }
     };
@@ -80,10 +78,8 @@ export const NotificationProvider = ({ children }) => {
       const tokenString = JSON.stringify(browserInfo);
       const token = btoa(tokenString).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
       
-      console.log('Device token generated:', token);
       return token;
     } catch (error) {
-      console.error('Error generating device token:', error);
       return null;
     }
   };
@@ -108,14 +104,11 @@ export const NotificationProvider = ({ children }) => {
       );
       
       if (result.success) {
-        console.log('Device token stored in database for user:', userId);
         return true;
       } else {
-        console.error('Failed to store device token:', result.error);
         return false;
       }
     } catch (error) {
-      console.error('Error storing device token:', error);
       return false;
     }
   };
@@ -144,7 +137,6 @@ export const NotificationProvider = ({ children }) => {
       }
       return false;
     } catch (error) {
-      console.error('Error requesting permission:', error);
       return false;
     }
   };
@@ -154,7 +146,6 @@ export const NotificationProvider = ({ children }) => {
     try {
       return await deviceTokenService.sendNotificationToUser(userId, notificationData);
     } catch (error) {
-      console.error('Error sending notification:', error);
       return false;
     }
   };

@@ -8,9 +8,6 @@ import { getFirestore, getMessaging, sendNotificationToUser } from "@/lib/fireba
  */
 export async function sendFirebaseAdminNotification(userId, notificationData) {
   try {
-    console.log("🚀 Firebase Admin: Sending notification to user:", userId);
-    console.log("📦 Firebase Admin: Notification data:", notificationData);
-
     const db = getFirestore();
     const messaging = getMessaging();
 
@@ -18,7 +15,6 @@ export async function sendFirebaseAdminNotification(userId, notificationData) {
     const userDoc = await db.collection("users").doc(userId).get();
 
     if (!userDoc.exists) {
-      console.error("❌ Firebase Admin: User not found:", userId);
       return {
         success: false,
         error: "User not found",
@@ -31,14 +27,11 @@ export async function sendFirebaseAdminNotification(userId, notificationData) {
     const userFCMToken = userData?.mobileFcmToken;
 
     if (!userFCMToken) {
-      console.error("❌ Firebase Admin: Mobile FCM token not found for user:", userId);
       return {
         success: false,
         error: "Mobile FCM token not found. User needs to enable notifications on mobile app.",
       };
     }
-
-    console.log("📱 Firebase Admin: Using FCM token:", userFCMToken.substring(0, 20) + "...");
 
     // Prepare notification payload
     const notificationPayload = {
@@ -53,45 +46,19 @@ export async function sendFirebaseAdminNotification(userId, notificationData) {
       },
     };
 
-    console.log("📤 Firebase Admin: Sending FCM notification with payload:", notificationPayload);
-
     // Send notification using Firebase Admin
     const result = await sendNotificationToUser(userFCMToken, notificationPayload);
 
     if (result.success) {
-      console.log("✅ Firebase Admin: Notification sent successfully:", result.messageId);
-      
-      // Also store notification in database for in-app notification list
-      try {
-        const notificationDoc = {
-          userId: userId,
-          title: notificationData.title,
-          description: notificationData.description || notificationData.body,
-          isSeen: false,
-          data: notificationData.data || {},
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          source: "firebase-admin",
-          pushNotificationId: result.messageId
-        };
-
-        const notificationRef = await db.collection("notifications").add(notificationDoc);
-        console.log("✅ Firebase Admin: Notification stored in database:", notificationRef.id);
-      } catch (dbError) {
-        console.error("❌ Firebase Admin: Failed to store notification in database:", dbError);
-        // Don't fail the whole operation if database storage fails
-      }
-      
       return {
         success: true,
         messageId: result.messageId,
         userId: userId,
         fcmToken: userFCMToken.substring(0, 20) + "...",
         source: "firebase-admin",
-        storedInDatabase: true
+        storedInDatabase: false
       };
     } else {
-      console.error("❌ Firebase Admin: Failed to send notification:", result.error);
       return {
         success: false,
         error: result.error,
@@ -99,7 +66,6 @@ export async function sendFirebaseAdminNotification(userId, notificationData) {
     }
 
   } catch (error) {
-    console.error("❌ Firebase Admin: Error in sendFirebaseAdminNotification:", error);
     return {
       success: false,
       error: error.message || "Unknown error occurred",
@@ -111,8 +77,6 @@ export async function sendFirebaseAdminNotification(userId, notificationData) {
  * Send notification to multiple users using Firebase Admin SDK
  */
 export async function sendFirebaseAdminNotificationToMultipleUsers(userIds, notificationData) {
-  console.log("📢 Firebase Admin: Sending notifications to multiple users:", userIds.length);
-  
   const promises = userIds.map(userId => 
     sendFirebaseAdminNotification(userId, notificationData)
   );
@@ -121,8 +85,6 @@ export async function sendFirebaseAdminNotificationToMultipleUsers(userIds, noti
   
   const successCount = results.filter(result => result.success).length;
   const failureCount = results.length - successCount;
-  
-  console.log(`📊 Firebase Admin: Notification results: ${successCount} success, ${failureCount} failed`);
   
   return {
     success: successCount > 0,
@@ -153,8 +115,6 @@ export async function storeFirebaseAdminNotification(notificationData) {
 
     const docRef = await db.collection("notifications").add(notification);
     
-    console.log("✅ Firebase Admin: Notification stored in Firestore:", docRef.id);
-    
     return {
       success: true,
       notificationId: docRef.id,
@@ -162,7 +122,6 @@ export async function storeFirebaseAdminNotification(notificationData) {
     };
 
   } catch (error) {
-    console.error("❌ Firebase Admin: Error storing notification:", error);
     return {
       success: false,
       error: error.message
@@ -175,8 +134,6 @@ export async function storeFirebaseAdminNotification(notificationData) {
  */
 export async function sendCompleteFirebaseAdminNotification(userId, notificationData) {
   try {
-    console.log("🔄 Firebase Admin: Starting complete notification flow for user:", userId);
-
     // Step 1: Store notification in Firestore
     const storeResult = await storeFirebaseAdminNotification({
       ...notificationData,
@@ -184,7 +141,6 @@ export async function sendCompleteFirebaseAdminNotification(userId, notification
     });
 
     if (!storeResult.success) {
-      console.error("❌ Firebase Admin: Failed to store notification");
       return storeResult;
     }
 
@@ -203,7 +159,6 @@ export async function sendCompleteFirebaseAdminNotification(userId, notification
     };
 
   } catch (error) {
-    console.error("❌ Firebase Admin: Error in complete notification flow:", error);
     return {
       success: false,
       error: error.message

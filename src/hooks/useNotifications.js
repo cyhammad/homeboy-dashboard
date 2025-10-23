@@ -20,8 +20,6 @@ export const useNotifications = () => {
         // Use notifications from Firebase context
         const notificationsData = data.notifications || [];
         
-        console.log('Raw notifications data:', notificationsData);
-        
         // Sort by createdAt (newest first) and handle different date formats
         const sortedNotifications = notificationsData.sort((a, b) => {
           let dateA, dateB;
@@ -48,8 +46,6 @@ export const useNotifications = () => {
           return dateB - dateA;
         });
         
-        console.log('Sorted notifications:', sortedNotifications);
-        
         // Map notification fields to match expected structure
         const mappedNotifications = sortedNotifications.map(notification => ({
           ...notification,
@@ -61,14 +57,20 @@ export const useNotifications = () => {
           readAt: notification.readAt
         }));
         
-        console.log('Mapped notifications:', mappedNotifications);
+        // Filter out notifications from mobile app listings
+        // Only show notifications that are NOT listing-related
+        // This prevents duplicate notifications when mobile app creates listings
+        const filteredNotifications = mappedNotifications.filter(notification => {
+          // Skip listing notifications entirely
+          const isListingNotification = 
+            notification.type === 'listing' ||
+            notification.data?.type === 'listing' ||
+            notification.title?.toLowerCase().includes('listing');
+          
+          return !isListingNotification;
+        });
         
-        // Show all notifications from Firestore backend
-        console.log('All notifications from backend:', mappedNotifications);
-        console.log('Total notifications count:', mappedNotifications.length);
-        
-        // Show all notifications without filtering
-        setNotifications(mappedNotifications);
+        setNotifications(filteredNotifications);
       } catch (err) {
         console.error('Error fetching notifications:', err);
         setError(err.message);

@@ -16,7 +16,6 @@ const ProtectedRoute = ({ children }) => {
       const hasValidCookie = isAuthenticatedViaCookie();
       
       if (hasValidCookie) {
-        console.log('Valid auth cookie found, allowing access');
         setIsCheckingAuth(false);
         return;
       }
@@ -28,7 +27,6 @@ const ProtectedRoute = ({ children }) => {
       
       // If no valid cookie and no Firebase user, redirect to login
       if (!isAuthenticated) {
-        console.log('No valid authentication found, redirecting to login');
         router.push('/login');
         return;
       }

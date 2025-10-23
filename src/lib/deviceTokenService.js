@@ -27,11 +27,9 @@ class DeviceTokenService {
 
       if (response.ok) {
         const result = await response.json();
-        console.log('Device notification sent successfully to user:', userId, result);
         return result;
       } else {
         const errorData = await response.json();
-        console.warn('Device notification failed for user:', userId, errorData.error);
         
         // Even if device notification fails, we should still store the notification in database
         // This ensures the user can see it in their notification list
@@ -54,17 +52,15 @@ class DeviceTokenService {
           });
           
           if (dbResponse.ok) {
-            console.log('Notification stored in database as fallback for user:', userId);
             return { success: true, fallback: true, message: 'Notification stored in database (device notification failed)' };
           }
         } catch (dbError) {
-          console.error('Failed to store fallback notification:', dbError);
+          // Silent fallback
         }
         
         return { success: false, error: errorData.error, fallback: false };
       }
     } catch (error) {
-      console.error('Error sending device notification to user:', error);
       return { success: false, error: error.message, fallback: false };
     }
   }
@@ -87,15 +83,12 @@ class DeviceTokenService {
 
       if (response.ok) {
         const result = await response.json();
-        console.log('Device token stored successfully for user:', userId);
         return result;
       } else {
         const errorData = await response.json();
-        console.error('Failed to store device token:', errorData.error);
         return { success: false, error: errorData.error };
       }
     } catch (error) {
-      console.error('Error storing device token:', error);
       return { success: false, error: error.message };
     }
   }
@@ -113,7 +106,6 @@ class DeviceTokenService {
         return { success: false, error: errorData.error };
       }
     } catch (error) {
-      console.error('Error getting device token:', error);
       return { success: false, error: error.message };
     }
   }

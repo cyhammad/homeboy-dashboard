@@ -14,7 +14,6 @@ class ClientNotificationService {
    */
   setAdminUserId(adminUserId) {
     this.adminUserId = adminUserId;
-    console.log('Client: Admin user ID set to:', adminUserId);
   }
 
   /**
@@ -37,7 +36,6 @@ class ClientNotificationService {
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('Client: Error sending admin notification:', error);
       return { success: false, error: error.message };
     }
   }

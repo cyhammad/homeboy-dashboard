@@ -13,7 +13,6 @@ export async function GET(request) {
       );
     }
 
-    console.log("🔍 Debug: Checking device token for user:", userId);
 
     // Use Firebase Admin SDK
     const db = getFirestore();
@@ -62,7 +61,6 @@ export async function GET(request) {
       }
     };
 
-    console.log("🔍 Debug info for user device token:", debugInfo);
 
     return NextResponse.json({
       success: true,

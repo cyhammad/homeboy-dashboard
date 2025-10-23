@@ -66,15 +66,6 @@ const DashboardUI = ({ data }) => {
     const currentDate = new Date();
     const chartData = [];
 
-    console.log('Generating chart data with:', { users: users?.length, inquiries: inquiries?.length });
-    
-    // Debug: Log sample dates
-    if (users?.length > 0) {
-      console.log('Sample user date:', users[0].createdAt, typeof users[0].createdAt);
-    }
-    if (inquiries?.length > 0) {
-      console.log('Sample inquiry date:', inquiries[0].requestedAt || inquiries[0].createdAt, typeof (inquiries[0].requestedAt || inquiries[0].createdAt));
-    }
 
     for (let i = 11; i >= 0; i--) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
@@ -96,9 +87,6 @@ const DashboardUI = ({ data }) => {
         
         const isMatch = userDate.getMonth() === date.getMonth() && 
                userDate.getFullYear() === date.getFullYear();
-        if (isMatch) {
-          console.log(`User found in ${monthName}:`, user, 'Date:', userDate);
-        }
         return isMatch;
       }).length || 0;
 
@@ -120,9 +108,6 @@ const DashboardUI = ({ data }) => {
         
         const isMatch = inquiryDate.getMonth() === date.getMonth() && 
                inquiryDate.getFullYear() === date.getFullYear();
-        if (isMatch) {
-          console.log(`Inquiry found in ${monthName}:`, inquiry, 'Date:', inquiryDate);
-        }
         return isMatch;
       }).length || 0;
 
@@ -133,7 +118,6 @@ const DashboardUI = ({ data }) => {
       });
     }
 
-    console.log('Generated chart data:', chartData);
     return chartData;
   };
 

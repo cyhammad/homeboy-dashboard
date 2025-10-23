@@ -12,8 +12,6 @@ export async function POST(request) {
       );
     }
 
-    console.log("🟢 Storing mobile FCM token for user:", userId);
-    console.log("📦 FCM token:", fcmToken);
 
     if (!userId || !fcmToken) {
       return NextResponse.json(
@@ -27,7 +25,6 @@ export async function POST(request) {
     const adminApp = (await import("@/lib/firebaseAdmin")).default;
 
     if (!adminApp) {
-      console.error("❌ Firebase Admin not initialized");
       return NextResponse.json(
         {
           success: false,
@@ -49,15 +46,12 @@ export async function POST(request) {
 
     await db.collection("users").doc(userId).set(updateData, { merge: true });
 
-    console.log(`✅ Mobile FCM token stored successfully for user: ${userId}`);
-
     return NextResponse.json({
       success: true,
       message: "Mobile FCM token stored successfully"
     });
 
   } catch (error) {
-    console.error("❌ Error storing FCM token:", error);
     return NextResponse.json(
       { success: false, error: "Failed to store FCM token" },
       { status: 500 }

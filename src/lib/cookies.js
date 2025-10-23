@@ -22,7 +22,6 @@ export const setAuthCookie = (userData) => {
     const cookieString = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(cookieData))}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
     
     document.cookie = cookieString;
-    console.log('Auth cookie set successfully');
     return true;
   } catch (error) {
     console.error('Error setting auth cookie:', error);
@@ -52,12 +51,10 @@ export const getAuthCookie = () => {
     const maxAge = COOKIE_EXPIRY_DAYS * 24 * 60 * 60 * 1000; // Convert days to milliseconds
 
     if (cookieAge > maxAge) {
-      console.log('Auth cookie expired');
       removeAuthCookie();
       return null;
     }
 
-    console.log('Auth cookie retrieved successfully');
     return userData;
   } catch (error) {
     console.error('Error getting auth cookie:', error);
@@ -71,7 +68,6 @@ export const removeAuthCookie = () => {
     if (typeof document === 'undefined') return false;
     
     document.cookie = `${COOKIE_NAME}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; secure; samesite=strict`;
-    console.log('Auth cookie removed successfully');
     return true;
   } catch (error) {
     console.error('Error removing auth cookie:', error);

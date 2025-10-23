@@ -2,8 +2,6 @@
 import React, { useState, useRef } from "react";
 import { createListingWithImages } from "@/lib/firebaseUtils";
 import { useAuth } from "@/context/AuthContext";
-import FilteredNotificationService from "@/lib/filteredNotificationService";
-import clientNotificationService from "@/lib/clientNotificationService";
 
 const CustomInput = ({ type, title, value, onChange, error }) => {
   return (
@@ -188,28 +186,14 @@ const CreateModal = ({
         price: parseFloat(formData.price),
         userId: user?.uid || 'admin',
         ownerName: user?.displayName || 'Admin',
-        ownerEmail: user?.email || 'admin@example.com'
+        ownerEmail: user?.email || 'admin@example.com',
+        source: 'admin-dashboard' // Mark as admin-created to prevent duplicate notifications
       };
 
       const createdListing = await createListingWithImages(listingData, files);
       
-      // Send notification about new listing creation to users (only pending requests are stored)
-      await FilteredNotificationService.notifyNewListing({
-        id: createdListing.id,
-        title: listingData.title,
-        ownerName: listingData.ownerName,
-        ...listingData
-      });
-
-      // Send notification to admin's mobile app about listing creation
-      await clientNotificationService.notifyListingCreated({
-        id: createdListing.id,
-        title: listingData.title,
-        location: listingData.location,
-        price: listingData.price,
-        ownerName: listingData.ownerName,
-        ...listingData
-      });
+      // Note: Notifications are automatically created by FirebaseContext realtime listener
+      // No need to manually send notifications here to prevent duplicates
       
       // Reset form
       setFormData({

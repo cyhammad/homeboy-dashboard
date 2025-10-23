@@ -12,39 +12,22 @@ export async function POST(request) {
       );
     }
 
-    console.log("💾 Storing fallback notification for user:", userId);
 
-    // Use Firebase Admin SDK
-    const db = getFirestore();
-
-    // Store notification in database
-    const notificationDoc = {
-      userId: userId,
-      title: notification.title,
-      description: notification.description,
-      type: notification.type || 'general',
-      data: notification.data || {},
-      isSeen: false,
-      read: false,
-      source: notification.source || 'fallback-storage',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    const notificationRef = await db.collection("notifications").add(notificationDoc);
-
-    console.log("✅ Fallback notification stored:", notificationRef.id);
+    // DEPRECATED: This endpoint is no longer needed
+    // The realtime listener in FirebaseContext.jsx automatically creates notifications
+    // when new listings/inquiries are detected in Firestore
+    // Returning success without storing to prevent duplicates
 
     return NextResponse.json({
       success: true,
-      message: "Fallback notification stored successfully",
-      notificationId: notificationRef.id
+      message: "Notification will be created automatically by realtime listener",
+      deprecated: true
     });
 
   } catch (error) {
-    console.error("❌ Error storing fallback notification:", error);
+    console.error("❌ Error in fallback endpoint:", error);
     return NextResponse.json(
-      { error: "Failed to store fallback notification" },
+      { error: "Failed to process request" },
       { status: 500 }
     );
   }

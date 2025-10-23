@@ -16,7 +16,6 @@ const AdminFCMInitializer = () => {
         if (storedToken) {
           setToken(storedToken);
           setFcmStatus('ready');
-          console.log('Using stored FCM token');
           return;
         }
 
@@ -25,13 +24,10 @@ const AdminFCMInitializer = () => {
         if (newToken) {
           setToken(newToken);
           setFcmStatus('ready');
-          console.log('FCM initialized successfully');
         } else {
           setFcmStatus('error');
-          console.log('FCM initialization failed');
         }
       } catch (error) {
-        console.error('Error initializing FCM:', error);
         setFcmStatus('error');
       }
     };
@@ -43,7 +39,6 @@ const AdminFCMInitializer = () => {
   useEffect(() => {
     if (fcmStatus === 'ready') {
       fcmService.onMessage((payload) => {
-        console.log('Received foreground message:', payload);
         // You can add custom handling here if needed
       });
     }

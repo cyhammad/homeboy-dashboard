@@ -12,64 +12,22 @@ export async function POST(request) {
       );
     }
 
-    let notificationData;
-
-    if (type === 'listing') {
-      const ownerName = data.ownerName || data.owner || 'Property Owner';
-      const propertyTitle = data.title || 'Property';
-      
-      notificationData = {
-        title: "New Listing Request",
-        description: `${ownerName} submitted a new property listing`,
-        userId: 'admin',
-        type: 'listing',
-        data: {
-          type: 'listing',
-          listingId: data.id,
-          ownerName: ownerName,
-          propertyTitle: propertyTitle,
-          source: 'mobile-app'
-        },
-        isSeen: false
-      };
-    } else if (type === 'inquiry') {
-      const inquirerName = data.inquirerName || data.buyerName || 'Someone';
-      const propertyId = data.listingId || data.propertyId || data.id;
-      
-      notificationData = {
-        title: "New Inquiry",
-        description: `${inquirerName} is interested in a property`,
-        userId: 'admin',
-        type: 'inquiry',
-        data: {
-          type: 'inquiry',
-          inquiryId: data.id,
-          inquirerName: inquirerName,
-          propertyId: propertyId,
-          source: 'mobile-app'
-        },
-        isSeen: false
-      };
-    } else {
-      return NextResponse.json(
-        { error: "Invalid type. Must be 'listing' or 'inquiry'" },
-        { status: 400 }
-      );
-    }
-
-    const notification = await createNotification(notificationData);
-
-    console.log('Realtime notification created:', notification);
+    // DEPRECATED: This endpoint is no longer needed
+    // The realtime listener in FirebaseContext.jsx automatically creates notifications
+    // when new listings/inquiries are detected in Firestore
+    // Keeping this endpoint for backward compatibility but it now returns success without creating duplicates
+    
 
     return NextResponse.json({
       success: true,
-      notification: notification
+      message: "Notification will be created automatically by realtime listener",
+      deprecated: true
     });
 
   } catch (error) {
-    console.error('Error creating realtime notification:', error);
+    console.error('Error in create-realtime endpoint:', error);
     return NextResponse.json(
-      { error: "Failed to create notification" },
+      { error: "Failed to process request" },
       { status: 500 }
     );
   }

@@ -71,34 +71,16 @@ export async function POST(request) {
     if (result.success) {
       console.log("✅ Device notification sent successfully:", result.messageId);
       
-      // Also store notification in database for in-app notification list
-      try {
-        const notificationDoc = {
-          userId: userId,
-          title: notification.title,
-          description: notification.body,
-          isSeen: false,
-          read: false,
-          data: notification.data || {},
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          source: "device-token",
-          pushNotificationId: result.messageId
-        };
-
-        const notificationRef = await db.collection("notifications").add(notificationDoc);
-        console.log("✅ Notification stored in database:", notificationRef.id);
-      } catch (dbError) {
-        console.error("❌ Failed to store notification in database:", dbError);
-        // Don't fail the whole operation if database storage fails
-      }
+      // NOTE: Do NOT store notification in database here
+      // The realtime listener in FirebaseContext.jsx will handle storing notifications
+      // for listings/inquiries from mobile app to prevent duplicates
       
       return NextResponse.json({
         success: true,
         messageId: result.messageId,
         userId: userId,
         deviceToken: deviceToken.substring(0, 20) + "...",
-        storedInDatabase: true
+        storedInDatabase: false
       });
     } else {
       console.error("❌ Failed to send device notification:", result.error);

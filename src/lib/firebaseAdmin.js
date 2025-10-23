@@ -32,10 +32,6 @@ try {
     adminAuth = admin.auth();
     adminFirestore = admin.firestore();
     
-    console.log("✅ Firebase Admin initialized successfully");
-    console.log("✅ Firebase Admin Auth initialized");
-    console.log("✅ Firebase Admin Firestore initialized");
-    console.log("✅ Firebase Admin Messaging initialized");
   } else {
     adminApp = admin.app();
     adminMessaging = admin.messaging();

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { updateListingStatus } from '@/lib/firebaseUtils';
 import { useFirebase } from '@/context/FirebaseContext';
 
@@ -9,50 +9,39 @@ export const useListingRequests = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchListings = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Use listings from Firebase context
-        const listingsData = data.listings || [];
-        
-        // Map the data to match the expected structure
-        const mappedListings = listingsData.map(listing => ({
-          id: listing.id,
-          listingId: listing.id,
-          title: listing.title,
-          description: listing.description,
-          price: listing.price,
-          location: listing.location,
-          status: listing.status,
-          userId: listing.userId,
-          createdAt: listing.createdAt,
-          updatedAt: listing.updatedAt,
-          imageUrls: listing.imageUrls || [],
-          likedBy: listing.likedBy || [],
-          sharedBy: listing.sharedBy || [],
-          ...listing
-        }));
-        
-        setListings(mappedListings);
-      } catch (err) {
-        console.error('Error fetching listings:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchListings();
+    // Use listings directly from Firebase context without re-processing
+    const listingsData = data.listings || [];
+    
+    // Map the data to match the expected structure (only if data changed)
+    const mappedListings = listingsData.map(listing => ({
+      id: listing.id,
+      listingId: listing.id,
+      title: listing.title,
+      description: listing.description,
+      price: listing.price,
+      location: listing.location,
+      status: listing.status,
+      userId: listing.userId,
+      createdAt: listing.createdAt,
+      updatedAt: listing.updatedAt,
+      imageUrls: listing.imageUrls || [],
+      likedBy: listing.likedBy || [],
+      sharedBy: listing.sharedBy || [],
+      ...listing
+    }));
+    
+    setListings(mappedListings);
+    setLoading(false);
   }, [data.listings]);
 
-  // Filter listings by status
-  const getListingsByStatus = (status) => {
-    return listings.filter(listing => 
-      listing.status?.toLowerCase() === status.toLowerCase()
-    );
-  };
+  // Filter listings by status (memoized to prevent unnecessary re-renders)
+  const getListingsByStatus = useMemo(() => {
+    return (status) => {
+      return listings.filter(listing => 
+        listing.status?.toLowerCase() === status.toLowerCase()
+      );
+    };
+  }, [listings]);
 
   // Update listing status
   const updateStatus = async (listingId, newStatus) => {
@@ -106,6 +95,13 @@ export const useListingRequests = () => {
     });
   };
 
+  // Memoized status counts to prevent unnecessary re-calculations
+  const statusCounts = useMemo(() => ({
+    approvedCount: getListingsByStatus('approved').length,
+    pendingCount: getListingsByStatus('pending').length,
+    rejectedCount: getListingsByStatus('rejected').length,
+  }), [getListingsByStatus]);
+
   return {
     listings,
     loading,
@@ -115,8 +111,6 @@ export const useListingRequests = () => {
     getUserInfo,
     formatDate,
     // Status counts
-    approvedCount: getListingsByStatus('approved').length,
-    pendingCount: getListingsByStatus('pending').length,
-    rejectedCount: getListingsByStatus('rejected').length,
+    ...statusCounts,
   };
 };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { updateInquiryStatus } from '@/lib/firebaseUtils';
 import { useFirebase } from '@/context/FirebaseContext';
 import FilteredNotificationService from '@/lib/filteredNotificationService';
@@ -10,48 +10,37 @@ export const useInquiryRequests = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchInquiries = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Use inquiries from Firebase context
-        const inquiriesData = data.inquiries || [];
-        
-        // Map the data to match the expected structure
-        const mappedInquiries = inquiriesData.map(inquiry => ({
-          id: inquiry.id,
-          inquiryId: inquiry.id,
-          inquirerName: inquiry.inquirerName || inquiry.buyerName,
-          inquirerEmail: inquiry.inquirerEmail || inquiry.buyerEmail,
-          inquirerPhone: inquiry.inquirerPhone || inquiry.buyerPhone,
-          message: inquiry.message || inquiry.description,
-          status: inquiry.status?.toLowerCase() || 'pending',
-          createdAt: inquiry.createdAt || inquiry.requestedAt,
-          updatedAt: inquiry.updatedAt || inquiry.requestedAt,
-          property: inquiry.property,
-          userId: inquiry.userId,
-          ...inquiry
-        }));
-        
-        setInquiries(mappedInquiries);
-      } catch (err) {
-        console.error('Error fetching inquiries:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInquiries();
+    // Use inquiries directly from Firebase context without re-processing
+    const inquiriesData = data.inquiries || [];
+    
+    // Map the data to match the expected structure (only if data changed)
+    const mappedInquiries = inquiriesData.map(inquiry => ({
+      id: inquiry.id,
+      inquiryId: inquiry.id,
+      inquirerName: inquiry.inquirerName || inquiry.buyerName,
+      inquirerEmail: inquiry.inquirerEmail || inquiry.buyerEmail,
+      inquirerPhone: inquiry.inquirerPhone || inquiry.buyerPhone,
+      message: inquiry.message || inquiry.description,
+      status: inquiry.status?.toLowerCase() || 'pending',
+      createdAt: inquiry.createdAt || inquiry.requestedAt,
+      updatedAt: inquiry.updatedAt || inquiry.requestedAt,
+      property: inquiry.property,
+      userId: inquiry.userId,
+      ...inquiry
+    }));
+    
+    setInquiries(mappedInquiries);
+    setLoading(false);
   }, [data.inquiries]);
 
-  // Filter inquiries by status
-  const getInquiriesByStatus = (status) => {
-    return inquiries.filter(inquiry => 
-      inquiry.status?.toLowerCase() === status.toLowerCase()
-    );
-  };
+  // Filter inquiries by status (memoized to prevent unnecessary re-renders)
+  const getInquiriesByStatus = useMemo(() => {
+    return (status) => {
+      return inquiries.filter(inquiry => 
+        inquiry.status?.toLowerCase() === status.toLowerCase()
+      );
+    };
+  }, [inquiries]);
 
   // Update inquiry status
   const updateStatus = async (inquiryId, newStatus) => {
