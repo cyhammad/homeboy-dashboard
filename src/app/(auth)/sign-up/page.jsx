@@ -155,6 +155,30 @@ const SignUp = () => {
           document.cookie = `user-fcmToken=${encodeURIComponent(data.user.fcmToken)}; ${cookieOptions}`;
           document.cookie = `user-role=${encodeURIComponent(data.user.role)}; ${cookieOptions}`;
           
+          // Try to get FCM token and update server
+          try {
+            const { requestNotificationPermission } = await import('@/lib/fcm-client-safe');
+            const fcmToken = await requestNotificationPermission();
+            if (fcmToken) {
+              // Update FCM token on server
+              await fetch('/api/auth/update-fcm-token', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-firebase-token': idToken,
+                },
+                body: JSON.stringify({ fcmToken }),
+              });
+              
+              // Update FCM token in cookie
+              document.cookie = `user-fcmToken=${encodeURIComponent(fcmToken)}; ${cookieOptions}`;
+              
+              console.log('FCM token updated on server and cookie after registration');
+            }
+          } catch (fcmError) {
+            console.log('FCM token will be set later:', fcmError.message);
+          }
+          
           // Redirect to dashboard
           router.push('/');
           router.refresh();

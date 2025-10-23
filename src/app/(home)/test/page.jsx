@@ -76,7 +76,13 @@ const TestPage = () => {
       
       if (response.ok) {
         console.log('FCM token updated on server:', data.message);
-        setMessage(prev => prev + ' FCM token updated on server!');
+        
+        // Update FCM token in cookie
+        const maxAge = 86400; // 24 hours
+        const cookieOptions = `path=/; max-age=${maxAge}; secure; samesite=strict`;
+        document.cookie = `user-fcmToken=${encodeURIComponent(token)}; ${cookieOptions}`;
+        
+        setMessage(prev => prev + ' FCM token updated on server and cookie!');
       } else {
         console.error('Failed to update FCM token on server:', data.error);
         setMessage(prev => prev + ' (Warning: Failed to update server)');

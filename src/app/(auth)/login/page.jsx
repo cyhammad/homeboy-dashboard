@@ -167,7 +167,11 @@ const Login = () => {
                 },
                 body: JSON.stringify({ fcmToken }),
               });
-              console.log('FCM token updated on server after login');
+              
+              // Update FCM token in cookie
+              document.cookie = `user-fcmToken=${encodeURIComponent(fcmToken)}; ${cookieOptions}`;
+              
+              console.log('FCM token updated on server and cookie after login');
             }
           } catch (fcmError) {
             console.log('FCM token will be set later:', fcmError.message);
