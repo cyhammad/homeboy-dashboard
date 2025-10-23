@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Graphs from "./components/Graph";
+import Graphs from "@/components/dashboard/Graph";
 import Card from "@/components/Card/Card";
 import { CARD_DATA } from "@/constants/cards";
 
