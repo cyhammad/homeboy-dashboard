@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import adminNotificationService from '@/lib/adminNotificationService';
+import clientNotificationService from '@/lib/clientNotificationService';
 
 const AdminNotificationInitializer = () => {
   const { user } = useAuth();
@@ -9,10 +9,10 @@ const AdminNotificationInitializer = () => {
   useEffect(() => {
     // Initialize admin notification service with current user ID
     if (user?.uid) {
-      adminNotificationService.setAdminUserId(user.uid);
+      clientNotificationService.setAdminUserId(user.uid);
     } else {
       // Fallback: use 'admin' as default
-      adminNotificationService.setAdminUserId('admin');
+      clientNotificationService.setAdminUserId('admin');
     }
   }, [user]);
 

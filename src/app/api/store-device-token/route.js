@@ -2,22 +2,15 @@ import { NextResponse } from "next/server";
 
 export async function POST(request) {
   try {
-    const { userId, fcmToken, platform = 'mobile' } = await request.json();
+    const { userId, deviceToken, platform = 'mobile', deviceInfo = {} } = await request.json();
 
-    // Only allow mobile platform tokens
-    if (platform !== 'mobile') {
+    console.log("🟢 Storing device token for user:", userId);
+    console.log("📦 Device token:", deviceToken);
+    console.log("📱 Platform:", platform);
+
+    if (!userId || !deviceToken) {
       return NextResponse.json(
-        { success: false, error: "Only mobile platform tokens are allowed" },
-        { status: 400 }
-      );
-    }
-
-    console.log("🟢 Storing mobile FCM token for user:", userId);
-    console.log("📦 FCM token:", fcmToken);
-
-    if (!userId || !fcmToken) {
-      return NextResponse.json(
-        { success: false, error: "User ID and FCM token are required" },
+        { success: false, error: "User ID and device token are required" },
         { status: 400 }
       );
     }
@@ -39,27 +32,32 @@ export async function POST(request) {
 
     const db = getFirestore();
 
-    // Store only mobile FCM token
+    // Store device token with additional metadata
     const updateData = {
-      mobileFcmToken: fcmToken,
-      fcmToken: fcmToken, // Keep backward compatibility
-      lastTokenUpdate: new Date().toISOString(),
+      deviceToken: deviceToken,
+      platform: platform,
+      deviceInfo: {
+        ...deviceInfo,
+        lastSeen: new Date().toISOString(),
+        tokenUpdatedAt: new Date().toISOString()
+      },
       updatedAt: new Date().toISOString()
     };
 
     await db.collection("users").doc(userId).set(updateData, { merge: true });
 
-    console.log(`✅ Mobile FCM token stored successfully for user: ${userId}`);
+    console.log(`✅ Device token stored successfully for user: ${userId}`);
 
     return NextResponse.json({
       success: true,
-      message: "Mobile FCM token stored successfully"
+      message: "Device token stored successfully",
+      deviceToken: deviceToken.substring(0, 20) + "..."
     });
 
   } catch (error) {
-    console.error("❌ Error storing FCM token:", error);
+    console.error("❌ Error storing device token:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to store FCM token" },
+      { success: false, error: "Failed to store device token" },
       { status: 500 }
     );
   }

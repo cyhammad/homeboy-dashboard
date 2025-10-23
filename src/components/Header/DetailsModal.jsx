@@ -28,6 +28,29 @@ const NotificationRow = ({ notification, formatTimeAgo, onNotificationAction }) 
     }
   };
 
+  // Check if this notification should show accept/reject buttons
+  const shouldShowActionButtons = () => {
+    // Show buttons only for pending request notifications
+    const title = notification.title?.toLowerCase() || '';
+    const dataType = notification.data?.type || '';
+    
+    // Check if it's a pending listing request
+    const isPendingListing = 
+      (dataType === 'listing' || title.includes('listing')) &&
+      (title.includes('new listing request') || 
+       title.includes('listing request') ||
+       title.includes('new listing'));
+    
+    // Check if it's a pending inquiry request
+    const isPendingInquiry = 
+      (dataType === 'inquiry' || title.includes('inquiry')) &&
+      (title.includes('new inquiry') || 
+       title.includes('inquiry request') ||
+       title.includes('new inquiry request'));
+    
+    return isPendingListing || isPendingInquiry;
+  };
+
   return (
     <div className="bg-white">
       <div className="flex gap-2 mx-6 text-sm border-b border-b-black/10">
@@ -46,22 +69,24 @@ const NotificationRow = ({ notification, formatTimeAgo, onNotificationAction }) 
             </div>
           </div>
         </div>
-        <div className="items-center flex text-xs">
-          <div className="flex gap-1">
-            <button
-              onClick={() => handleAction('reject')}
-              className="px-4 py-2 rounded-sm text-white bg-red-500 cursor-pointer hover:bg-red-500/80"
-            >
-              Reject
-            </button>
-            <button
-              onClick={() => handleAction('approve')}
-              className="px-4 py-2 rounded-sm text-white bg-primary cursor-pointer hover:bg-primary/80"
-            >
-              Approve
-            </button>
+        {shouldShowActionButtons() && (
+          <div className="items-center flex text-xs">
+            <div className="flex gap-1">
+              <button
+                onClick={() => handleAction('reject')}
+                className="px-4 py-2 rounded-sm text-white bg-red-500 cursor-pointer hover:bg-red-500/80"
+              >
+                Reject
+              </button>
+              <button
+                onClick={() => handleAction('approve')}
+                className="px-4 py-2 rounded-sm text-white bg-primary cursor-pointer hover:bg-primary/80"
+              >
+                Approve
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

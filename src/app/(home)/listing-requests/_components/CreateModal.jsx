@@ -2,8 +2,8 @@
 import React, { useState, useRef } from "react";
 import { createListingWithImages } from "@/lib/firebaseUtils";
 import { useAuth } from "@/context/AuthContext";
-import NotificationService from "@/lib/notificationService";
-import adminNotificationService from "@/lib/adminNotificationService";
+import FilteredNotificationService from "@/lib/filteredNotificationService";
+import clientNotificationService from "@/lib/clientNotificationService";
 
 const CustomInput = ({ type, title, value, onChange, error }) => {
   return (
@@ -77,6 +77,11 @@ const CreateModal = ({
       newErrors.price = 'Price must be a valid number';
     }
     
+    // Validate that at least one image is uploaded
+    if (files.length === 0) {
+      newErrors.images = 'At least one image is required';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -108,6 +113,14 @@ const CreateModal = ({
     }
     
     setFiles(prev => [...prev, ...imageFiles].slice(0, 10)); // Limit to 10 images
+    
+    // Clear images error when files are added
+    if (errors.images) {
+      setErrors(prev => ({
+        ...prev,
+        images: ''
+      }));
+    }
   };
 
   const handleDragOver = (e) => {
@@ -135,10 +148,28 @@ const CreateModal = ({
     }
     
     setFiles(prev => [...prev, ...imageFiles].slice(0, 10));
+    
+    // Clear images error when files are dropped
+    if (errors.images) {
+      setErrors(prev => ({
+        ...prev,
+        images: ''
+      }));
+    }
   };
 
   const removeFile = (index) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFiles(prev => {
+      const newFiles = prev.filter((_, i) => i !== index);
+      // If removing this file would result in no files, show error
+      if (newFiles.length === 0) {
+        setErrors(prevErrors => ({
+          ...prevErrors,
+          images: 'At least one image is required'
+        }));
+      }
+      return newFiles;
+    });
   };
 
   const handleSubmit = async () => {
@@ -162,8 +193,8 @@ const CreateModal = ({
 
       const createdListing = await createListingWithImages(listingData, files);
       
-      // Send notification about new listing creation to users
-      await NotificationService.notifyNewListing({
+      // Send notification about new listing creation to users (only pending requests are stored)
+      await FilteredNotificationService.notifyNewListing({
         id: createdListing.id,
         title: listingData.title,
         ownerName: listingData.ownerName,
@@ -171,7 +202,7 @@ const CreateModal = ({
       });
 
       // Send notification to admin's mobile app about listing creation
-      await adminNotificationService.notifyListingCreated({
+      await clientNotificationService.notifyListingCreated({
         id: createdListing.id,
         title: listingData.title,
         location: listingData.location,
@@ -263,7 +294,7 @@ const CreateModal = ({
                   </div>
                   <div>
                     <div className="flex flex-col gap-1">
-                      <p>Gallery ({files.length}/10)</p>
+                      <p>Gallery ({files.length}/10) <span className="text-red-500">*</span></p>
                       <label htmlFor="file">
                         <div 
                           className={`border cursor-pointer flex justify-center items-center border-dashed rounded-lg h-24 w-full transition-colors ${
@@ -309,6 +340,9 @@ const CreateModal = ({
                             </div>
                           ))}
                         </div>
+                      )}
+                      {errors.images && (
+                        <p className="text-red-500 text-xs mt-1">{errors.images}</p>
                       )}
                     </div>
                   </div>

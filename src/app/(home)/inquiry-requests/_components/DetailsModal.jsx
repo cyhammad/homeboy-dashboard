@@ -7,7 +7,7 @@ import React, { useState } from "react";
 
 import { IMAGES } from "@/assets";
 import { CgClose } from "react-icons/cg";
-import adminNotificationService from "@/lib/adminNotificationService";
+import clientNotificationService from "@/lib/clientNotificationService";
 import { useNotifications } from "@/context/NotificationContext";
 
 const Popup = ({ onClose, img }) => {
@@ -60,7 +60,7 @@ const DetailsModal = ({
       await updateStatus(inquiry.id, newStatus);
       
       // Send FCM notification to admin's mobile app about inquiry action
-      await adminNotificationService.notifyInquiryAction(inquiry, newStatus);
+      await clientNotificationService.notifyInquiryAction(inquiry, newStatus);
       
       // Send notification to user about status change
       if (inquiry.userId) {
@@ -230,8 +230,8 @@ const DetailsModal = ({
                 </div>
               )}
               
-              {/* Action Buttons */}
-              {inquiry.status?.toLowerCase() === 'pending' && (
+              {/* Action Buttons - Commented out for now */}
+              {/* {inquiry.status?.toLowerCase() === 'pending' && (
                 <div className="flex gap-2 py-4 border-t border-t-black/10">
                   <button
                     onClick={() => handleStatusUpdate('rejected')}
@@ -248,7 +248,7 @@ const DetailsModal = ({
                     {updating ? 'Updating...' : 'Approve'}
                   </button>
                 </div>
-              )}
+              )} */}
             </div>
           </div>
         </div>

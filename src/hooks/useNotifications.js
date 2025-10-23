@@ -62,7 +62,31 @@ export const useNotifications = () => {
         }));
         
         console.log('Mapped notifications:', mappedNotifications);
-        setNotifications(mappedNotifications);
+        
+        // Filter to only show pending request notifications
+        const pendingRequestNotifications = mappedNotifications.filter(notification => {
+          const title = notification.title?.toLowerCase() || '';
+          const dataType = notification.data?.type || '';
+          
+          // Check if it's a pending listing request notification
+          const isPendingListing = 
+            (dataType === 'listing' || title.includes('listing')) &&
+            (title.includes('new listing request') || 
+             title.includes('listing request') ||
+             title.includes('new listing'));
+          
+          // Check if it's a pending inquiry request notification
+          const isPendingInquiry = 
+            (dataType === 'inquiry' || title.includes('inquiry')) &&
+            (title.includes('new inquiry') || 
+             title.includes('inquiry request') ||
+             title.includes('new inquiry request'));
+          
+          return isPendingListing || isPendingInquiry;
+        });
+        
+        console.log('Filtered pending request notifications:', pendingRequestNotifications);
+        setNotifications(pendingRequestNotifications);
       } catch (err) {
         console.error('Error fetching notifications:', err);
         setError(err.message);

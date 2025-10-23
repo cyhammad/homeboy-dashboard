@@ -1,7 +1,4 @@
 import { NextResponse } from "next/server";
-import { sendNotificationToUser } from "@/lib/firebaseAdmin";
-import { getFirestore } from "firebase-admin/firestore";
-import adminApp from "@/lib/firebaseAdmin";
 
 export async function POST(request) {
   try {
@@ -17,6 +14,10 @@ export async function POST(request) {
       );
     }
 
+    // Use Firebase Admin SDK for all operations
+    const { getFirestore } = await import("@/lib/firebaseAdmin");
+    const adminApp = (await import("@/lib/firebaseAdmin")).default;
+
     if (!adminApp) {
       console.error("❌ Firebase Admin not initialized");
       return NextResponse.json(
@@ -29,7 +30,7 @@ export async function POST(request) {
       );
     }
 
-    const db = getFirestore(adminApp);
+    const db = getFirestore();
 
     // Fetch user document
     const userDoc = await db.collection("users").doc(userId).get();
@@ -42,21 +43,29 @@ export async function POST(request) {
     }
 
     const userData = userDoc.data();
-    const userFCMToken = userData?.fcmToken;
+    
+    // ONLY use mobile FCM token for push notifications (ignore web tokens)
+    const userFCMToken = userData?.mobileFcmToken;
 
     if (!userFCMToken) {
       return NextResponse.json(
         {
           success: false,
           error:
-            "User FCM token not found. User needs to enable notifications.",
+            "Mobile FCM token not found. User needs to enable notifications on mobile app.",
         },
         { status: 404 }
       );
     }
 
-    // Send push notification
-    const result = await sendNotificationToUser(userFCMToken, notification);
+    // Send push notification using the new push service
+    const { sendPushNotificationToUser } = await import("@/services/pushNotificationService");
+    const result = await sendPushNotificationToUser(userId, {
+      id: 'api-notification-' + Date.now(),
+      title: notification.title,
+      description: notification.body,
+      data: notification.data
+    });
 
     if (result.success) {
       return NextResponse.json({

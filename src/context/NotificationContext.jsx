@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import fcmService from '@/lib/fcmService';
+import deviceTokenService from '@/lib/deviceTokenService';
 import { useAuth } from '@/context/AuthContext';
 
 const NotificationContext = createContext();
@@ -14,14 +14,14 @@ export const useNotifications = () => {
 };
 
 export const NotificationProvider = ({ children }) => {
-  const [fcmToken, setFcmToken] = useState(null);
+  const [deviceToken, setDeviceToken] = useState(null);
   const [permission, setPermission] = useState('default');
   const [isInitialized, setIsInitialized] = useState(false);
   const { user } = useAuth();
 
-  // Initialize FCM when component mounts
+  // Initialize device token when component mounts
   useEffect(() => {
-    const initializeFCM = async () => {
+    const initializeDeviceToken = async () => {
       try {
         // Check if we're in browser
         if (typeof window === 'undefined') {
@@ -41,50 +41,82 @@ export const NotificationProvider = ({ children }) => {
         setPermission(currentPermission);
 
         if (currentPermission === 'granted') {
-          // Initialize FCM and get token
-          const token = await fcmService.initializeFCM();
+          // Generate a device token for this browser session
+          const token = await generateDeviceToken();
           if (token) {
-            setFcmToken(token);
+            setDeviceToken(token);
             
-            // Store token in database (you might want to call an API here)
-            await storeTokenInDatabase(token);
+            // Store device token in database
+            if (user?.uid) {
+              await storeDeviceTokenInDatabase(token, user.uid);
+            }
           }
         }
 
         setIsInitialized(true);
       } catch (error) {
-        console.error('Error initializing FCM:', error);
+        console.error('Error initializing device token:', error);
         setIsInitialized(true);
       }
     };
 
-    initializeFCM();
-  }, []);
+    initializeDeviceToken();
+  }, [user]);
 
-  // Store FCM token in database
-  const storeTokenInDatabase = async (token) => {
+  // Generate a device token for this browser session
+  const generateDeviceToken = async () => {
     try {
-      if (typeof window === 'undefined') return;
+      // Generate a unique device token based on browser fingerprint and timestamp
+      const browserInfo = {
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        platform: navigator.platform,
+        screenResolution: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timestamp: Date.now()
+      };
       
-      console.log('Storing FCM token:', token);
+      // Create a hash-like token from browser info
+      const tokenString = JSON.stringify(browserInfo);
+      const token = btoa(tokenString).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
       
-      // Store FCM token in database
-      const response = await fetch('/api/store-fcm-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userId: user?.uid || 'admin', // Use current user ID
-          fcmToken: token 
-        })
-      });
+      console.log('Device token generated:', token);
+      return token;
+    } catch (error) {
+      console.error('Error generating device token:', error);
+      return null;
+    }
+  };
 
-      if (response.ok) {
-        console.log('FCM token stored successfully');
+  // Store device token in database
+  const storeDeviceTokenInDatabase = async (token, userId) => {
+    try {
+      const deviceInfo = {
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        platform: navigator.platform,
+        screenResolution: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        lastSeen: new Date().toISOString()
+      };
+
+      const result = await deviceTokenService.storeDeviceToken(
+        userId, 
+        token, 
+        'web', 
+        deviceInfo
+      );
+      
+      if (result.success) {
+        console.log('Device token stored in database for user:', userId);
+        return true;
       } else {
-        console.error('Failed to store FCM token');
+        console.error('Failed to store device token:', result.error);
+        return false;
       }
     } catch (error) {
-      console.error('Error storing FCM token:', error);
+      console.error('Error storing device token:', error);
+      return false;
     }
   };
 
@@ -93,15 +125,22 @@ export const NotificationProvider = ({ children }) => {
     try {
       if (typeof window === 'undefined') return false;
       
-      const token = await fcmService.requestPermission();
-      if (token) {
-        setFcmToken(token);
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
         setPermission('granted');
         
-        // Store token in database
-        await storeTokenInDatabase(token);
-        
-        return true;
+        // Generate and store device token
+        const token = await generateDeviceToken();
+        if (token) {
+          setDeviceToken(token);
+          
+          // Store device token in database
+          if (user?.uid) {
+            await storeDeviceTokenInDatabase(token, user.uid);
+          }
+          
+          return true;
+        }
       }
       return false;
     } catch (error) {
@@ -110,10 +149,10 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
-  // Send notification to user
+  // Send notification to user using device token
   const sendNotification = async (userId, notificationData) => {
     try {
-      return await fcmService.sendNotificationToUser(userId, notificationData);
+      return await deviceTokenService.sendNotificationToUser(userId, notificationData);
     } catch (error) {
       console.error('Error sending notification:', error);
       return false;
@@ -132,7 +171,8 @@ export const NotificationProvider = ({ children }) => {
   };
 
   const value = {
-    fcmToken,
+    deviceToken,
+    fcmToken: deviceToken, // Keep backward compatibility
     permission,
     isInitialized,
     requestPermission,

@@ -1,27 +1,11 @@
 /**
- * Admin Notification Service
- * Sends FCM push notifications to admin's mobile app when admin actions are performed
+ * Client-side Notification Service
+ * This service only makes API calls and doesn't import Firebase Admin SDK
  */
 
-import fcmService from './fcmService';
-
-class AdminNotificationService {
+class ClientNotificationService {
   constructor() {
     this.adminUserId = 'admin'; // Admin user ID
-    this.fcmService = fcmService;
-    
-    // Initialize FCM service
-    this.initializeFCM();
-  }
-
-  // Initialize FCM service
-  async initializeFCM() {
-    try {
-      await this.fcmService.initializeFCM();
-      console.log('Admin FCM service initialized');
-    } catch (error) {
-      console.error('Error initializing admin FCM service:', error);
-    }
   }
 
   /**
@@ -30,28 +14,30 @@ class AdminNotificationService {
    */
   setAdminUserId(adminUserId) {
     this.adminUserId = adminUserId;
-    console.log('Admin user ID set to:', adminUserId);
+    console.log('Client: Admin user ID set to:', adminUserId);
   }
 
   /**
-   * Send FCM push notification to admin's mobile app using Firebase Admin
+   * Send notification via API route (client-safe)
    * @param {Object} notificationData - Notification data
    */
   async sendAdminNotification(notificationData) {
     try {
-      // Use Firebase Admin notification service
-      const { sendFirebaseAdminNotification } = await import("@/services/firebaseAdminNotificationService");
-      
-      // Send push notification to admin's mobile app
-      const result = await sendFirebaseAdminNotification('admin', {
-        title: notificationData.title,
-        description: notificationData.body,
-        data: notificationData.data
+      const response = await fetch('/api/send-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: this.adminUserId,
+          notification: notificationData
+        })
       });
-      
+
+      const result = await response.json();
       return result;
     } catch (error) {
-      console.error('Error sending admin FCM notification:', error);
+      console.error('Client: Error sending admin notification:', error);
       return { success: false, error: error.message };
     }
   }
@@ -153,10 +139,9 @@ class AdminNotificationService {
       }
     });
   }
-
 }
 
 // Create singleton instance
-const adminNotificationService = new AdminNotificationService();
+const clientNotificationService = new ClientNotificationService();
 
-export default adminNotificationService;
+export default clientNotificationService;

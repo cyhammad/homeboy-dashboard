@@ -2,6 +2,8 @@ import admin from "firebase-admin";
 
 let adminApp;
 let adminMessaging;
+let adminAuth;
+let adminFirestore;
 
 try {
   if (!admin.apps.length) {
@@ -25,11 +27,20 @@ try {
       projectId: process.env.FIREBASE_PROJECT_ID,
     });
 
+    // Initialize all Firebase Admin services
     adminMessaging = admin.messaging();
+    adminAuth = admin.auth();
+    adminFirestore = admin.firestore();
+    
     console.log("✅ Firebase Admin initialized successfully");
+    console.log("✅ Firebase Admin Auth initialized");
+    console.log("✅ Firebase Admin Firestore initialized");
+    console.log("✅ Firebase Admin Messaging initialized");
   } else {
     adminApp = admin.app();
     adminMessaging = admin.messaging();
+    adminAuth = admin.auth();
+    adminFirestore = admin.firestore();
   }
 } catch (error) {
   console.error("❌ Firebase Admin initialization failed:", error);
@@ -98,6 +109,90 @@ export async function sendNotificationToUser(userFCMToken, notificationData) {
     console.error("❌ Error sending notification:", error);
     return { success: false, error: error.message };
   }
+}
+
+/**
+ * Verify Firebase ID token using Firebase Admin Auth
+ */
+export async function verifyIdToken(idToken) {
+  try {
+    if (!adminAuth) {
+      throw new Error("Firebase Admin Auth not initialized");
+    }
+
+    const decodedToken = await adminAuth.verifyIdToken(idToken);
+    console.log("✅ Firebase ID token verified:", decodedToken.uid);
+    return { success: true, decodedToken };
+  } catch (error) {
+    console.error("❌ Error verifying ID token:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get user by UID using Firebase Admin Auth
+ */
+export async function getUserByUid(uid) {
+  try {
+    if (!adminAuth) {
+      throw new Error("Firebase Admin Auth not initialized");
+    }
+
+    const userRecord = await adminAuth.getUser(uid);
+    console.log("✅ User retrieved:", userRecord.uid);
+    return { success: true, user: userRecord };
+  } catch (error) {
+    console.error("❌ Error getting user:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Create custom token for user using Firebase Admin Auth
+ */
+export async function createCustomToken(uid, additionalClaims = {}) {
+  try {
+    if (!adminAuth) {
+      throw new Error("Firebase Admin Auth not initialized");
+    }
+
+    const customToken = await adminAuth.createCustomToken(uid, additionalClaims);
+    console.log("✅ Custom token created for user:", uid);
+    return { success: true, customToken };
+  } catch (error) {
+    console.error("❌ Error creating custom token:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get Firestore instance
+ */
+export function getFirestore() {
+  if (!adminFirestore) {
+    throw new Error("Firebase Admin Firestore not initialized");
+  }
+  return adminFirestore;
+}
+
+/**
+ * Get Auth instance
+ */
+export function getAuth() {
+  if (!adminAuth) {
+    throw new Error("Firebase Admin Auth not initialized");
+  }
+  return adminAuth;
+}
+
+/**
+ * Get Messaging instance
+ */
+export function getMessaging() {
+  if (!adminMessaging) {
+    throw new Error("Firebase Admin Messaging not initialized");
+  }
+  return adminMessaging;
 }
 
 export default adminApp;

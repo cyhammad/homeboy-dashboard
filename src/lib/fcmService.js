@@ -99,32 +99,9 @@ class FCMService {
     }
   }
 
-  // Store FCM token in Firestore for the admin user
-  async storeTokenInFirestore(token) {
-    try {
-      const response = await fetch('/api/store-fcm-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: 'admin', // Admin user ID
-          fcmToken: token
-        })
-      });
-
-      if (response.ok) {
-        console.log('FCM token stored in Firestore');
-        return true;
-      } else {
-        console.error('Failed to store FCM token in Firestore');
-        return false;
-      }
-    } catch (error) {
-      console.error('Error storing FCM token:', error);
-      return false;
-    }
-  }
+  // Note: This FCM service is for web browser notifications only
+  // Mobile app notifications are handled separately via pushNotificationService
+  // This service is kept for backward compatibility but should not be used for mobile notifications
 
   // Get stored token
   getStoredToken() {
@@ -189,12 +166,42 @@ class FCMService {
         console.log('Notification sent successfully to user:', userId, result);
         return result;
       } else {
-        console.error('Failed to send notification to user:', userId);
-        return false;
+        const errorData = await response.json();
+        console.warn('Push notification failed for user:', userId, errorData.error);
+        
+        // Even if push notification fails, we should still store the notification in database
+        // This ensures the user can see it in their notification list
+        try {
+          const dbResponse = await fetch('/api/notifications/store-fallback', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: userId,
+              notification: {
+                title: notificationData.title,
+                description: notificationData.body,
+                data: notificationData.data || {},
+                type: notificationData.data?.type || 'general',
+                source: 'fallback-storage'
+              }
+            })
+          });
+          
+          if (dbResponse.ok) {
+            console.log('Notification stored in database as fallback for user:', userId);
+            return { success: true, fallback: true, message: 'Notification stored in database (push notification failed)' };
+          }
+        } catch (dbError) {
+          console.error('Failed to store fallback notification:', dbError);
+        }
+        
+        return { success: false, error: errorData.error, fallback: false };
       }
     } catch (error) {
       console.error('Error sending notification to user:', error);
-      return false;
+      return { success: false, error: error.message, fallback: false };
     }
   }
 

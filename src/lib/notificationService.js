@@ -1,5 +1,22 @@
 import { createNotification } from './firebaseUtils';
 
+// Server-side push notification function using Firebase Admin
+async function sendPushNotification(userId, notification) {
+  if (typeof window !== "undefined") {
+    return false;
+  }
+  try {
+    // Use Firebase Admin notification service
+    const { sendFirebaseAdminNotification } = await import(
+      "@/services/firebaseAdminNotificationService"
+    );
+    return await sendFirebaseAdminNotification(userId, notification);
+  } catch (error) {
+    console.error("Error sending push notification:", error);
+    return false;
+  }
+}
+
 // Notification service for sending notifications between app and admin
 export class NotificationService {
   
@@ -17,6 +34,16 @@ export class NotificationService {
           timestamp: new Date().toISOString()
         },
         isSeen: false
+      });
+      
+      // Send push notification to admin's mobile app
+      sendPushNotification('admin', {
+        id: notification.id,
+        title: notificationData.title,
+        description: notificationData.description,
+        data: notificationData.data
+      }).catch((error) => {
+        console.error("Failed to send push notification to admin (non-blocking):", error);
       });
       
       console.log('Notification sent to admin:', notification);
@@ -42,6 +69,23 @@ export class NotificationService {
         },
         isSeen: false
       });
+      
+      // Send push notification to user's mobile app
+      try {
+        const pushResult = await sendPushNotification(userId, {
+          id: notification.id,
+          title: notificationData.title,
+          description: notificationData.description,
+          data: notificationData.data
+        });
+        
+        if (!pushResult) {
+          console.warn("Push notification failed for user:", userId, "but notification was stored in database");
+        }
+      } catch (pushError) {
+        console.error("Failed to send push notification to user (non-blocking):", pushError);
+        // Don't throw error as notification is still stored in database
+      }
       
       console.log('Notification sent to user:', notification);
       return notification;

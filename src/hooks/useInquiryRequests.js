@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { updateInquiryStatus } from '@/lib/firebaseUtils';
 import { useFirebase } from '@/context/FirebaseContext';
-import NotificationService from '@/lib/notificationService';
+import FilteredNotificationService from '@/lib/filteredNotificationService';
 
 export const useInquiryRequests = () => {
   const { data } = useFirebase();
@@ -61,7 +61,7 @@ export const useInquiryRequests = () => {
       // Send notification to user about status change
       const inquiry = inquiries.find(i => i.id === inquiryId);
       if (inquiry) {
-        await NotificationService.notifyInquiryStatusChange(inquiry, newStatus);
+        await FilteredNotificationService.notifyInquiryStatusChange(inquiry, newStatus);
       }
       
       // Update local state

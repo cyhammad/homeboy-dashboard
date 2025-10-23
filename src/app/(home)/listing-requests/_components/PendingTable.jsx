@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import ArrowRight from "@/assets/icons/ArrowRight";
 import toast from "react-hot-toast";
 import { useNotifications } from "@/context/NotificationContext";
-import adminNotificationService from "@/lib/adminNotificationService";
+import clientNotificationService from "@/lib/clientNotificationService";
 
 const PendingTable = ({ setShowModal, listings = [], updateStatus }) => {
   const [updating, setUpdating] = useState({});
@@ -59,14 +59,14 @@ const PendingTable = ({ setShowModal, listings = [], updateStatus }) => {
       // Send notification to admin's mobile app about the action
       if (listing) {
         if (newStatus === 'approved') {
-          await adminNotificationService.notifyListingApproved({
+          await clientNotificationService.notifyListingApproved({
             id: listing.id,
             title: listing.title,
             location: listing.location,
             price: listing.price
           });
         } else if (newStatus === 'rejected') {
-          await adminNotificationService.notifyListingRejected({
+          await clientNotificationService.notifyListingRejected({
             id: listing.id,
             title: listing.title,
             location: listing.location,
