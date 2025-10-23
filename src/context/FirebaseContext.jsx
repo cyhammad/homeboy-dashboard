@@ -6,7 +6,8 @@ import {
   getListings, 
   getInquiries, 
   getUserNotifications,
-  listenToCollection 
+  listenToCollection,
+  createNotification
 } from '@/lib/firebaseUtils';
 import { COLLECTIONS } from '@/lib/firebase';
 import { useAuth } from './AuthContext';
@@ -53,7 +54,75 @@ export const FirebaseProvider = ({ children }) => {
         const unsubscribeListings = listenToCollection(
           COLLECTIONS.LISTINGS,
           (listings) => {
-            setData(prev => ({ ...prev, listings }));
+            console.log('📋 Listings listener triggered with', listings.length, 'listings');
+            console.log('📋 All listings IDs:', listings.map(l => l.id));
+            
+            // Check for new listings and create notifications
+            setData(prev => {
+              const previousListings = prev.listings || [];
+              console.log('📊 Previous listings count:', previousListings.length);
+              console.log('📊 Current listings count:', listings.length);
+              
+              // Simple detection: check by ID only
+              const newListings = listings.filter(newListing => {
+                const isNewById = !previousListings.some(prevListing => prevListing.id === newListing.id);
+                console.log(`🔍 Checking listing ${newListing.id}: isNew = ${isNewById}`);
+                return isNewById;
+              });
+              
+              console.log('🆕 New listings detected:', newListings.length);
+              console.log('New listings data:', newListings);
+              
+              // Only skip if this is truly the first load (no previous state at all)
+              if (prev.listings === undefined && listings.length > 0) {
+                console.log('🚫 First load detected - skipping notification creation');
+                return { ...prev, listings };
+              }
+              
+              // Create notifications for new listings
+              if (newListings.length > 0) {
+                newListings.forEach(listing => {
+                  // Skip if listing doesn't have required fields
+                  if (!listing.id) {
+                    console.warn('⚠️ Skipping listing notification - missing ID:', listing);
+                    return;
+                  }
+                  
+                  const ownerName = listing.ownerName || listing.owner || 'Property Owner';
+                  const propertyTitle = listing.title || 'Property';
+                  const listingStatus = listing.status || 'pending';
+                  
+                  console.log('🔔 Creating notification for listing:', {
+                    id: listing.id,
+                    title: propertyTitle,
+                    owner: ownerName,
+                    status: listingStatus
+                  });
+                  
+                  createNotification({
+                    title: "New Listing Request",
+                    description: `${ownerName} submitted a new property listing`,
+                    userId: 'admin',
+                    type: 'listing',
+                    data: {
+                      type: 'listing',
+                      listingId: listing.id,
+                      ownerName: ownerName,
+                      propertyTitle: propertyTitle,
+                      status: listingStatus,
+                      source: 'realtime-listener'
+                    },
+                    isSeen: false
+                  }).then(notification => {
+                    console.log('✅ Notification created successfully:', notification.id);
+                  }).catch(error => {
+                    console.error('❌ Error creating listing notification:', error);
+                  });
+                });
+              }
+              
+              return { ...prev, listings };
+            });
           },
           { limit: 100 }
         );
@@ -83,7 +152,47 @@ export const FirebaseProvider = ({ children }) => {
               ...inquiry
             }));
             console.log('Mapped inquiries from listener:', mappedInquiries);
-            setData(prev => ({ ...prev, inquiries: mappedInquiries }));
+            
+            // Check for new inquiries and create notifications
+            setData(prev => {
+              const previousInquiries = prev.inquiries || [];
+              const newInquiries = mappedInquiries.filter(newInquiry => 
+                !previousInquiries.some(prevInquiry => prevInquiry.id === newInquiry.id)
+              );
+              
+              // Create notifications for new inquiries
+              if (newInquiries.length > 0) {
+                newInquiries.forEach(inquiry => {
+                  // Skip if inquiry doesn't have required fields
+                  if (!inquiry.id) {
+                    console.warn('Skipping inquiry notification - missing ID:', inquiry);
+                    return;
+                  }
+                  
+                  const inquirerName = inquiry.inquirerName || inquiry.buyerName || 'Someone';
+                  const propertyId = inquiry.listingId || inquiry.propertyId || inquiry.id;
+                  
+                  createNotification({
+                    title: "New Inquiry",
+                    description: `${inquirerName} is interested in a property`,
+                    userId: 'admin',
+                    type: 'inquiry',
+                    data: {
+                      type: 'inquiry',
+                      inquiryId: inquiry.id,
+                      inquirerName: inquirerName,
+                      propertyId: propertyId,
+                      source: 'realtime-listener'
+                    },
+                    isSeen: false
+                  }).catch(error => {
+                    console.error('Error creating inquiry notification:', error);
+                  });
+                });
+              }
+              
+              return { ...prev, inquiries: mappedInquiries };
+            });
           },
           { limit: 100 }
         );
