@@ -1,7 +1,11 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase-client';
+import Image from 'next/image';
+import Swal from 'sweetalert2';
 
-const CustomInput = ({ type, title }) => {
+const CustomInput = ({ type, title, value, onChange }) => {
   return (
     <div className="text-black w-full">
       <div className="flex flex-col gap-2">
@@ -15,15 +19,16 @@ const CustomInput = ({ type, title }) => {
               cols={10}
               rows={3}
               className="w-full outline-none"
+              value={value}
+              onChange={onChange}
             />
           ) : (
             <input
               type={type}
               placeholder="Write"
               className="outline-none w-full h-full"
-              onChange={(e) => {
-                console.log(e.target.value);
-              }}
+              value={value}
+              onChange={onChange}
             />
           )}
         </div>
@@ -36,62 +41,220 @@ const CreateModal = ({
   onclose,
   status
 }) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    location: '',
+    price: '',
+  });
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const imageUrls = files.map(file => URL.createObjectURL(file));
+    setUploadedImages(prev => [...prev, ...imageUrls]);
+  };
+
+  const removeImage = (index) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.title || !formData.description || !formData.location || !formData.price) {
+      // Close dialog first
+      onclose();
+      
+      await Swal.fire({
+        title: 'Missing Information',
+        text: 'Please fill in all required fields before submitting.',
+        icon: 'warning',
+        confirmButtonColor: '#27ABEB',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    
+    // Close dialog first
+    onclose();
+    
+    // Show loading state
+    Swal.fire({
+      title: 'Creating Listing...',
+      text: 'Please wait while we save your listing.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    try {
+      const listingData = {
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
+        price: parseFloat(formData.price),
+        status: status?.toLowerCase() || 'pending',
+        imageUrls: uploadedImages,
+        userId: 'admin', // You might want to get this from auth context
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        likedBy: [],
+        sharedBy: []
+      };
+
+      await addDoc(collection(db, 'listings'), listingData);
+      
+      // Reset form
+      setFormData({
+        title: '',
+        description: '',
+        location: '',
+        price: '',
+      });
+      setUploadedImages([]);
+      
+      // Success message
+      await Swal.fire({
+        title: 'Success!',
+        text: 'Your listing has been created successfully and is now live.',
+        icon: 'success',
+        confirmButtonColor: '#10b981',
+        confirmButtonText: 'Great!'
+      });
+    } catch (error) {
+      console.error('Error creating listing:', error);
+      
+      // Error message
+      await Swal.fire({
+        title: 'Error',
+        text: 'Failed to create listing. Please check your connection and try again.',
+        icon: 'error',
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Try Again'
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
-    <>
-      <div className=" z-20 absolute justify-end flex top-6 right-6 rounded-2xl bg-white">
-        <div className="rounded-2xl top-0 right-0">
-          <div className="flex flex-col gap-1 w-[34rem]">
-            <div className="flex justify-between py-3 px-6 border-b border-b-black/10">
-              <p>Create Listing</p>
-              <p className="cursor-pointer" onClick={onclose}>
-                X
-              </p>
+    <div className="flex flex-col gap-1 w-full">
+      <div className="flex flex-col gap-2 text-sm">
+        <div className="text-sm border-b py-4 border-b-black/20">
+          <p>
+            Enter details here and listing will be live as you click
+            upload
+          </p>
+        </div>
+        <div className="flex flex-col gap-4 py-4 text-xs">
+          <div className="flex flex-col gap-2 w-full">
+            <CustomInput 
+              type="text" 
+              title="Title" 
+              value={formData.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
+            />
+            <CustomInput 
+              type="area" 
+              title="Description" 
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+            />
+            <div className="flex gap-2">
+              <CustomInput 
+                type="text" 
+                title="Location" 
+                value={formData.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
+              />
+              <CustomInput 
+                type="number" 
+                title="Asking Price" 
+                value={formData.price}
+                onChange={(e) => handleInputChange('price', e.target.value)}
+              />
             </div>
-            <div className="flex flex-col gap-2 px-6 text-sm">
-              <div className="text-sm border-b py-4 border-b-black/20">
-                <p className="font-semibold text-black">Create Listing</p>
-                <p>
-                  Enter details here and listing will be live as you click
-                  upload
-                </p>
-              </div>
-              <div className="flex flex-col gap-4 py-4  text-xs">
-                <div className="flex flex-col gap-2 w-full">
-                  <CustomInput type="text" title="Title" />
-                  <CustomInput type="area" title="Description" />
-                  <div className="flex gap-2">
-                    <CustomInput type="text" title="Location" />
-                    <CustomInput type="text" title="Asking Price" />
-                  </div>
-                  <div>
-                    <div className="flex flex-col gap-1">
-                      <p>Gallery</p>
-                      <label htmlFor="file">
-                        <div className="border cursor-pointer flex justify-center items-center border-dashed border-black/30 rounded-lg h-24 w-full">
-                          <div className="text-center">
-                            <p>Drag here or upload</p>
-                            <p>Png or Jpeg</p>
-                          </div>
-                        </div>
-                      </label>
-                      <input type="file" className="hidden" id="file" />
+            <div>
+              <div className="flex flex-col gap-1">
+                <p>Gallery</p>
+                <label htmlFor="file">
+                  <div className="border cursor-pointer flex justify-center items-center border-dashed border-black/30 rounded-lg h-24 w-full">
+                    <div className="text-center">
+                      <p>Drag here or upload</p>
+                      <p>Png or Jpeg</p>
                     </div>
                   </div>
+                </label>
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  id="file" 
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                />
+              </div>
+              
+              {/* Display uploaded images */}
+              {uploadedImages.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium mb-2">Uploaded Images:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {uploadedImages.map((imageUrl, index) => (
+                      <div key={index} className="relative">
+                        <Image
+                          src={imageUrl}
+                          alt={`Upload ${index + 1}`}
+                          width={150}
+                          height={100}
+                          className="rounded-lg object-cover w-full h-24"
+                        />
+                        <button
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div className="flex text-xs gap-2 py-2 px-6 justify-end border-t border-t-black/10">
-              <div className="px-6 py-2 rounded-sm text-primary bg-transparent border border-primary cursor-pointer">
-                <p>Cancel</p>
-              </div>
-              <div className="px-6 py-2 rounded-sm text-white bg-primary cursor-pointer hover:bg-primary/80">
-                <p>Upload</p>
-              </div>
+              )}
             </div>
           </div>
         </div>
       </div>
-    </>
+      <div className="flex text-xs gap-2 py-2 justify-end border-t border-t-black/10">
+        <div 
+          onClick={onclose}
+          className="px-6 py-2 rounded-sm text-primary bg-transparent border border-primary cursor-pointer"
+        >
+          <p>Cancel</p>
+        </div>
+        <div 
+          onClick={handleSubmit}
+          className={`px-6 py-2 rounded-sm text-white cursor-pointer ${
+            isUploading 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-primary hover:bg-primary/80'
+          }`}
+        >
+          <p>{isUploading ? 'Uploading...' : 'Upload'}</p>
+        </div>
+      </div>
+    </div>
   );
 };
 

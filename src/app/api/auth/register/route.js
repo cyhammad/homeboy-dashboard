@@ -5,7 +5,7 @@ import { generateFCMToken } from '@/lib/fcm-utils';
 // POST /api/auth/register - Register new user
 export async function POST(request) {
   try {
-    const { email, password, displayName, photoURL } = await request.json();
+    const { email, password } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(

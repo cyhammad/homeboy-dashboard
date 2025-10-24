@@ -3,24 +3,21 @@ import Image from "next/image";
 import UserAvatar from "./useravatar.png";
 import DetailsModal from "./DetailsModal";
 import BellIcon from "@/assets/icons/Bell";
-
 import { useState } from "react";
-import { useModal } from "@/context/ModalContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const Header = () => {
   const [showNotifications, setShowNotifications] = useState(false);
-    const { openModal, closeModal } = useModal();
+  const [showModal, setShowModal] = useState(false);
 
   const handleNotificationClick = () => {
     setShowNotifications(!showNotifications);
     setShowModal(true);
-    openModal();
-  };
-  
-
-  const [showModal, setShowModal] = useState(false);
-  const closeModals = () => {
-    setShowModal(false);
   };
 
   return (
@@ -54,17 +51,16 @@ const Header = () => {
           </div>
         </div>
       </header>
-      {showModal && (
-        <div className="p-4">
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Notifications</DialogTitle>
+          </DialogHeader>
           <DetailsModal
-            onclose={() => {
-              setShowModal(false);
-              closeModals()
-              closeModal();
-            }}
+            onclose={() => setShowModal(false)}
           />
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

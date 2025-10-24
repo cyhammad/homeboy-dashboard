@@ -35,7 +35,7 @@ export async function GET(request) {
       const decodedToken = await verifyIdToken(firebaseToken);
       userId = decodedToken.uid;
       console.log('Debug: ID token verified, user ID:', userId);
-    } catch (tokenError) {
+    } catch {
       console.log('Debug: Not an ID token, trying custom token approach');
       
       // If it's a custom token, we need to exchange it for an ID token

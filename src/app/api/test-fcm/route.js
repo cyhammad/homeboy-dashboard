@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
-import { generateFCMToken, sendPushNotification } from '@/lib/fcm-utils';
+import { generateFCMToken } from '@/lib/fcm-utils';
 
 // GET /api/test-fcm - Test FCM token generation and retrieval
 export async function GET(request) {

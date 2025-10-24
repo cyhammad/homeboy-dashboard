@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
-import { generateFCMToken } from '@/lib/fcm-utils';
 
 // POST /api/auth/login - Login user
 export async function POST(request) {
@@ -18,7 +17,7 @@ export async function POST(request) {
     let userRecord;
     try {
       userRecord = await adminAuth.getUserByEmail(email);
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }

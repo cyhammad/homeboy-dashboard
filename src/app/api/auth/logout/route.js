@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // POST /api/auth/logout - Logout user
-export async function POST(request) {
+export async function POST() {
   try {
     // Create response with cookie removal
     const response = NextResponse.json({

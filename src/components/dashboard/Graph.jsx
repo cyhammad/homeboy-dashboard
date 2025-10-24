@@ -55,8 +55,53 @@ const CustomOverviewTooltip = ({ active, payload }) => {
   return null;
 };
 
-const DashboardUI = () => {
-  const overviewData = mockOverviewData;
+const DashboardUI = ({ listings, inquiries }) => {
+  // Generate chart data from real listings and inquiries
+  const overviewData = React.useMemo(() => {
+    if (!listings || !inquiries) {
+      return mockOverviewData;
+    }
+
+    // Group data by month
+    const currentDate = new Date();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    const monthlyData = {};
+    
+    // Initialize all months with 0
+    for (let i = 0; i < 12; i++) {
+      monthlyData[months[i]] = { users: 0, inquiries: 0 };
+    }
+
+    // Process listings data
+    listings.forEach(listing => {
+      if (listing.createdAt) {
+        const date = new Date(listing.createdAt);
+        const month = months[date.getMonth()];
+        if (monthlyData[month]) {
+          monthlyData[month].users += 1;
+        }
+      }
+    });
+
+    // Process inquiries data
+    inquiries.forEach(inquiry => {
+      if (inquiry.requestedAt) {
+        const date = new Date(inquiry.requestedAt);
+        const month = months[date.getMonth()];
+        if (monthlyData[month]) {
+          monthlyData[month].inquiries += 1;
+        }
+      }
+    });
+
+    // Convert to array format
+    return months.map(month => ({
+      name: month,
+      users: monthlyData[month]?.users || 0,
+      inquiries: monthlyData[month]?.inquiries || 0,
+    }));
+  }, [listings, inquiries]);
 
   return (
     <div>
