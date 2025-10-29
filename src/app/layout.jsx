@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono, Sora } from "next/font/google";
 import "./globals.css";
+import NotificationPermissionDialog from "@/components/NotificationPermissionDialog";
 
 const sora = Sora({
   variable: "--font-sora",
@@ -30,6 +31,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} antialiased`}
       >
         {children}
+        <NotificationPermissionDialog />
       </body>
     </html>
   );

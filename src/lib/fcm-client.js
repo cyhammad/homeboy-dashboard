@@ -20,6 +20,7 @@ const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
 
 // Initialize messaging only on client side
 let messaging = null;
+let swRegistration = null;
 
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   try {
@@ -47,11 +48,16 @@ export async function requestNotificationPermission() {
       return null;
     }
 
-    // Register service worker
+    // Ensure service worker is registered and cached for getToken
     if ('serviceWorker' in navigator) {
       try {
-        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-        console.log('Service Worker registered:', registration);
+        swRegistration = await navigator.serviceWorker.getRegistration();
+        if (!swRegistration) {
+          swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+          console.log('Service Worker registered:', swRegistration);
+        } else {
+          console.log('Service Worker already registered:', swRegistration);
+        }
       } catch (error) {
         console.error('Service Worker registration failed:', error);
       }
@@ -68,16 +74,22 @@ export async function requestNotificationPermission() {
     if (permission === 'granted') {
       console.log('Notification permission granted');
       
-      // Get FCM token
-      const token = await getToken(messaging, {
-        vapidKey: vapidKey,
-      });
-      
-      if (token) {
-        console.log('FCM token obtained:', token);
-        return token;
-      } else {
-        console.log('No registration token available');
+      // Get FCM token and explicitly bind to our Service Worker registration
+      try {
+        const token = await getToken(messaging, {
+          vapidKey: vapidKey,
+          serviceWorkerRegistration: swRegistration || undefined,
+        });
+        
+        if (token) {
+          console.log('FCM token obtained:', token);
+          return token;
+        } else {
+          console.log('No registration token available');
+          return null;
+        }
+      } catch (error) {
+        console.error('Error getting FCM token:', error);
         return null;
       }
     } else {
