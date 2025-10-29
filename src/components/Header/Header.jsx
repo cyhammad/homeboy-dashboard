@@ -96,10 +96,14 @@ const Header = () => {
   const [hasNewPush, setHasNewPush] = useState(false);
 
   // Show a dot if there are unseen notifications or we just received a push
-  const hasUnseen = useMemo(() => {
-    if (!notifications || notifications.length === 0) return false;
-    return notifications.some((n) => n.isSeen === false);
+  const adminNotifications = useMemo(() => {
+    return (notifications || []).filter((n) => n.userId === 'admin');
   }, [notifications]);
+
+  const hasUnseen = useMemo(() => {
+    if (!adminNotifications || adminNotifications.length === 0) return false;
+    return adminNotifications.some((n) => n.isSeen === false);
+  }, [adminNotifications]);
 
   const showDot = hasNewPush || hasUnseen;
 
@@ -234,14 +238,14 @@ const Header = () => {
                           Error loading notifications
                         </span>
                       </div>
-                    ) : notifications.length === 0 ? (
+                    ) : adminNotifications.length === 0 ? (
                       <div className="flex items-center justify-center p-8">
                         <span className="text-sm text-gray-500">
                           No notifications
                         </span>
                       </div>
                     ) : (
-                      notifications.slice(0, 10).map((notification) => (
+                      adminNotifications.slice(0, 10).map((notification) => (
                         <NotificationItem
                           key={notification.id}
                           notification={notification}

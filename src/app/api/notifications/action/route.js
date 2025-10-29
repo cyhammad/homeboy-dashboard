@@ -51,6 +51,54 @@ export async function POST(request) {
       updatedAt: new Date()
     });
 
+    // Create a new notification for feed in requested format
+    try {
+      const inquirerName = notificationData?.data?.buyerName || notificationData?.data?.ownerName || notificationData?.ownerName || 'User';
+      const inquiryId = notificationData?.data?.inquiryId || (actionData.requestType === 'inquiry' ? actionData.requestId : undefined);
+      const propertyId = notificationData?.data?.propertyId || notificationData?.data?.listingId || undefined;
+      const type = notificationData?.type || actionData.requestType || 'inquiry';
+      const title = notificationData?.title || (type === 'inquiry' ? 'New Inquiry' : 'Listing Update');
+      const description = notificationData?.description || (type === 'inquiry'
+        ? `${inquirerName} is interested in a property`
+        : `Request ${actionData.status}`);
+
+      // Determine target userId from the listing/inquiry owner when available
+      let targetUserId = notificationData?.userId || notificationData?.data?.userId || '';
+      try {
+        const listingIdToLookup = propertyId || notificationData?.data?.listingId;
+        if (listingIdToLookup) {
+          const listingSnap = await adminDb.collection('listings').doc(listingIdToLookup).get();
+          if (listingSnap.exists) {
+            const listingData = listingSnap.data();
+            targetUserId = listingData?.userId || targetUserId;
+          }
+        }
+      } catch (lookupErr) {
+        console.log('Could not resolve listing owner userId:', lookupErr?.message);
+      }
+
+      const adminNotificationDoc = {
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        data: notificationData?.data || {},
+        inquirerName: inquirerName,
+        inquiryId: inquiryId || '',
+        propertyId: propertyId || '',
+        source: 'admin-action',
+        type: type,
+        description: description,
+        isSeen: false,
+        read: false,
+        title: title,
+        userId: targetUserId || 'user',
+      };
+
+      await adminDb.collection('notifications').add(adminNotificationDoc);
+    } catch (createErr) {
+      console.error('Failed to create admin notification from action:', createErr);
+      // Do not fail the action if notification creation fails
+    }
+
     return NextResponse.json({ 
       message: `Notification ${action}d successfully`,
       action,
