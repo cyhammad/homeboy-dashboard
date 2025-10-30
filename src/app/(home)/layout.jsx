@@ -11,7 +11,7 @@ const AdminLayout = ({
   useNotificationPermission();
 
   return (
-    <div className="flex w-full font-sora gap-6 h-full max-h-screen bg-[#F7F8FA] text-black">
+    <div className="flex w-full font-sora gap-6 h-full bg-[#F7F8FA] text-black">
       <div className="">
         <Sidebar />
       </div>
