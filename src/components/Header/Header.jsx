@@ -130,7 +130,7 @@ const Header = () => {
   // Show a dot if there are unseen notifications or we just received a push
   const adminNotifications = useMemo(() => {
     // Filter by recieverId for admin notifications, fallback to userId
-    return (notifications || []).filter((n) => n.recieverId === 'FsdBt8wB7Edku66IZaa0k5tqUsH3' || n.receiverId === 'FsdBt8wB7Edku66IZaa0k5tqUsH3' || n.userId === 'admin');
+    return (notifications || []).filter((n) => n.senderId !== 'FsdBt8wB7Edku66IZaa0k5tqUsH3' || n.receiverId === 'FsdBt8wB7Edku66IZaa0k5tqUsH3' || n.userId === 'admin');
   }, [notifications]);
 
   const hasUnseen = useMemo(() => {
