@@ -164,7 +164,7 @@ const Bookings = () => {
         </div>
       </div>
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl top-4 right-4 translate-x-0 translate-y-0 left-auto">
           <DialogHeader>
             <DialogTitle>Inquiry Details</DialogTitle>
           </DialogHeader>

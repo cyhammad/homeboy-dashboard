@@ -235,7 +235,7 @@ const ListingRequests = () => {
         </div>
       </div>
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl top-4 right-4 translate-x-0 translate-y-0 left-auto">
           <DialogHeader>
             <DialogTitle>Listing Requests</DialogTitle>
           </DialogHeader>
@@ -248,7 +248,7 @@ const ListingRequests = () => {
       </Dialog>
 
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl top-4 right-4 translate-x-0 translate-y-0 left-auto">
           <DialogHeader>
             <DialogTitle>Create Listing</DialogTitle>
           </DialogHeader>
