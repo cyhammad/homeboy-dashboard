@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/pagination";
 
 const Bookings = () => {
-  const [currentButton, setCurrentButton] = useState("All");
   const [showModal, setShowModal] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,40 +33,14 @@ const Bookings = () => {
     setShowModal(true);
   };
 
-  // Filter inquiries based on current tab
-  const getFilteredInquiries = () => {
-    if (!inquiries) return [];
-    
-    switch (currentButton) {
-      case "All":
-        return inquiries;
-      case "Pending":
-        return inquiries.filter(inquiry => inquiry.status?.toLowerCase() === "pending");
-      case "Approved":
-        return inquiries.filter(inquiry => inquiry.status?.toLowerCase() === "approved");
-      case "Rejected":
-        return inquiries.filter(inquiry => inquiry.status?.toLowerCase() === "rejected");
-      default:
-        return inquiries;
-    }
-  };
-
-  const filteredInquiries = getFilteredInquiries();
-
   // Pagination logic
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return filteredInquiries.slice(startIndex, endIndex);
-  }, [filteredInquiries, currentPage, itemsPerPage]);
+    return (inquiries || []).slice(startIndex, endIndex);
+  }, [inquiries, currentPage, itemsPerPage]);
 
-  const totalPages = Math.ceil(filteredInquiries.length / itemsPerPage);
-
-  // Reset to first page when switching tabs
-  const handleTabChange = (tab) => {
-    setCurrentButton(tab);
-    setCurrentPage(1);
-  };
+  const totalPages = Math.ceil((inquiries || []).length / itemsPerPage);
 
   // Pagination handlers
   const handlePageChange = (page) => {
@@ -129,56 +102,6 @@ const Bookings = () => {
           <div className="flex gap-4 flex-col px-8 py-4 border border-black/10 rounded-2xl bg-white">
             <div className="flex items-center justify-between py-4 border-b border-b-black/20">
               <p className="font-semibold text-black/60">Inquiry Requests</p>
-            </div>
-            
-            {/* Status Tabs */}
-            <div className="flex">
-              <div className="flex gap-2 border-b-[#90929414] border-b-2">
-                <p
-                  onClick={() => {
-                    handleTabChange("All");
-                  }}
-                  className={`py-2 px-4 text-[#A6A8A9] ${
-                    currentButton == "All" &&
-                    "bg-white text-black/60 border-b-4 border-b-primary font-bold"
-                  } cursor-pointer text-sm`}
-                >
-                  All
-                </p>
-                <p
-                  onClick={() => {
-                    handleTabChange("Pending");
-                  }}
-                  className={`py-2 px-4 text-[#A6A8A9] ${
-                    currentButton == "Pending" &&
-                    "bg-white border-b-4 border-b-primary text-black/60 font-bold"
-                  } cursor-pointer text-sm`}
-                >
-                  Pending
-                </p>
-                <p
-                  onClick={() => {
-                    handleTabChange("Approved");
-                  }}
-                  className={`py-2 px-4 text-[#A6A8A9] ${
-                    currentButton == "Approved" &&
-                    "bg-white border-b-4 border-b-primary text-black/60 font-bold"
-                  } cursor-pointer text-sm`}
-                >
-                  Approved
-                </p>
-                <p
-                  onClick={() => {
-                    handleTabChange("Rejected");
-                  }}
-                  className={`py-2 px-4 text-[#A6A8A9] ${
-                    currentButton == "Rejected" &&
-                    "bg-white border-b-4 border-b-primary text-black/60 font-bold"
-                  } cursor-pointer text-sm`}
-                >
-                  Rejected
-                </p>
-              </div>
             </div>
             
             <DetailsTable inquiries={paginatedData} setShowModal={toggleModal} />

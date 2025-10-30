@@ -7,7 +7,6 @@ import React, { useState } from "react";
 
 import { IMAGES } from "@/assets";
 import { CgClose } from "react-icons/cg";
-import Swal from 'sweetalert2';
 
 const Popup = ({ onClose, img }) => {
   return (
@@ -70,74 +69,6 @@ const DetailsModal = ({ inquiry, onclose }) => {
       .slice(0, 2);
   };
 
-  const handleStatusChange = async (newStatus) => {
-    if (!inquiry?.id) return;
-    
-    // Close the dialog first
-    onclose();
-    
-    const actionText = newStatus === 'approved' ? 'approve' : 'reject';
-    const actionColor = newStatus === 'approved' ? '#10b981' : '#ef4444';
-    
-    const result = await Swal.fire({
-      title: `Are you sure you want to ${actionText} this inquiry?`,
-      text: `"${inquiry.buyerName}"'s inquiry will be ${actionText}d and moved to the ${newStatus} section.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: actionColor,
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: `Yes, ${actionText} it!`,
-      cancelButtonText: 'Cancel',
-      reverseButtons: true
-    });
-
-    if (result.isConfirmed) {
-      try {
-        Swal.fire({
-          title: 'Processing...',
-          text: `Please wait while we ${actionText} the inquiry.`,
-          allowOutsideClick: false,
-          allowEscapeKey: false,
-          showConfirmButton: false,
-          didOpen: () => {
-            Swal.showLoading();
-          }
-        });
-
-        const response = await fetch(`/api/inquiries/${inquiry.id}/status`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ status: newStatus }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to update inquiry status');
-        }
-
-        Swal.fire({
-          title: 'Success!',
-          text: `Inquiry has been ${actionText}d successfully.`,
-          icon: 'success',
-          confirmButtonColor: actionColor,
-          confirmButtonText: 'Great!'
-        });
-
-        // Refresh the page to show updated data
-        window.location.reload();
-      } catch (error) {
-        console.error('Error updating inquiry status:', error);
-        Swal.fire({
-          title: 'Error',
-          text: 'Failed to update inquiry status. Please try again.',
-          icon: 'error',
-          confirmButtonColor: '#ef4444',
-          confirmButtonText: 'Try Again'
-        });
-      }
-    }
-  };
 
   if (!inquiry) {
     return (
@@ -233,24 +164,6 @@ const DetailsModal = ({ inquiry, onclose }) => {
                   className="cursor-pointer rounded-lg object-cover"
                 />
               ))}
-            </div>
-          )}
-          
-          {/* Action Buttons for Pending Inquiries */}
-          {inquiry.status?.toLowerCase() === 'pending' && (
-            <div className="flex gap-4 py-4 border-t border-t-black/20">
-              <button
-                onClick={() => handleStatusChange('approved')}
-                className="flex-1 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors font-medium"
-              >
-                Accept Inquiry
-              </button>
-              <button
-                onClick={() => handleStatusChange('rejected')}
-                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors font-medium"
-              >
-                Reject Inquiry
-              </button>
             </div>
           )}
         </div>

@@ -73,7 +73,7 @@ const NotificationItem = ({
         </p>
       </div>
       <div className="ml-4 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-        {listing && listingStatus === "pending" && !isActionLoading && (
+        {listing && listingStatus === "pending" && !isActionLoading && notification.title !== "New Property Inquiry Request" && (
           <div className="flex gap-1">
             <button
               onClick={() =>
@@ -93,13 +93,13 @@ const NotificationItem = ({
             </button>
           </div>
         )}
-        {listing && listingStatus === "pending" && isActionLoading && (
+        {listing && listingStatus === "pending" && isActionLoading && notification.title !== "New Property Inquiry Request" && (
           <div className="flex items-center gap-2 px-2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
             <span className="text-xs text-gray-600">Processing...</span>
           </div>
         )}
-        {listingStatus === "approved" && (
+        {listingStatus === "approved" && notification.title !== "New Property Inquiry Request" && (
           <div className="flex items-center gap-2 text-green-600">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -107,7 +107,7 @@ const NotificationItem = ({
             <span className="text-xs font-medium">Accepted</span>
           </div>
         )}
-        {listingStatus === "rejected" && (
+        {listingStatus === "rejected" && notification.title !== "New Property Inquiry Request" && (
           <div className="flex items-center gap-2 text-red-600">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -225,14 +225,15 @@ const Header = () => {
   };
 
   const handleNotificationClick = (notification) => {
-    // Navigate based on notification type
-    if (notification.type === "listing") {
-      router.push("/listing-requests");
-    } else if (notification.type === "inquiry") {
+    // Close the notification modal
+    setIsNotificationOpen(false);
+    
+    // Navigate based on notification title
+    if (notification.title === "New Property Inquiry Request") {
       router.push("/inquiry-requests");
     } else {
-      // Default to dashboard
-      router.push("/");
+      // Default to listing requests
+      router.push("/listing-requests");
     }
   };
 
