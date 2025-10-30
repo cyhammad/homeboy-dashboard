@@ -237,7 +237,7 @@ const ListingRequests = () => {
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Listing Details</DialogTitle>
+            <DialogTitle>Listing Requests</DialogTitle>
           </DialogHeader>
           <DetailsModal
             listing={selectedListing}

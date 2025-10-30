@@ -152,7 +152,7 @@ const CreateModal = ({ onclose, status }) => {
   };
 
   return (
-    <div className="flex flex-col gap-1 w-full">
+    <div className="flex flex-col gap-1 w-full px-6 max-h-[80vh] overflow-y-auto">
       <div className="flex flex-col gap-2 text-sm">
         <div className="text-sm border-b py-4 border-b-black/20">
           <p>Enter details here and listing will be live as you click upload</p>

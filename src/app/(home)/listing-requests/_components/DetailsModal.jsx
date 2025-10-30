@@ -6,6 +6,7 @@ import Image from "next/image";
 import React, { useState } from "react";
 import { CgClose } from "react-icons/cg";
 import Swal from "sweetalert2";
+import { useUserData } from "@/hooks/useUserData";
 
 const Popup = ({ onClose, img }) => {
   return (
@@ -40,6 +41,9 @@ const Popup = ({ onClose, img }) => {
 const DetailsModal = ({ onclose, status, listing }) => {
   const [showImage, setShowImage] = useState(false);
   const [selectedImage, setSelectedImage] = useState("");
+  
+  // Fetch user data for the requester
+  const { userData, loading: userLoading } = useUserData(listing?.userId);
 
   const formatDate = (date) => {
     if (!date) return "N/A";
@@ -144,91 +148,122 @@ const DetailsModal = ({ onclose, status, listing }) => {
       )}
       <div className="flex flex-col gap-4 w-full">
         <div className="flex flex-col gap-2 px-6 text-sm">
-          <div className="flex py-2 border-b border-b-black/20 items-center gap-4">
-            <Image
-              src={IMAGES.avatar}
-              alt="avatar"
-              height={100}
-              width={100}
-              className="h-14 w-14 rounded-full"
-            />
-            <div className="text-sm">
-              <p className="font-semibold text-black">
-                {listing?.title || "Untitled Listing"}
-              </p>
-              <p>{listing?.location || "Location not specified"}</p>
-            </div>
+          {/* Requester Information */}
+          <div className="flex py-4 border-b border-b-black/20 items-center gap-4">
+            {userLoading ? (
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-full bg-gray-200 animate-pulse"></div>
+                <div>
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-2"></div>
+                  <div className="h-3 w-32 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="h-14 w-14 rounded-full overflow-hidden">
+                  {userData?.imageUrl ? (
+                    <img
+                      src={userData.imageUrl}
+                      alt={userData.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src={IMAGES.avatar}
+                      alt="avatar"
+                      height={51}
+                      width={51}
+                      className="h-14 w-14 rounded-full"
+                    />
+                  )}
+                </div>
+                <div className="text-sm">
+                  <p className="font-semibold text-black text-lg">
+                    {userData?.name || "Unknown User"}
+                  </p>
+                  <p className="text-gray-600">{userData?.email || "No email provided"}</p>
+                </div>
+              </>
+            )}
           </div>
-          <div className="flex flex-col gap-4 py-4 border-b border-b-black/20 text-xs">
-            <div className="flex justify-between">
-              <div className="flex flex-col flex-1 gap-1">
-                <p className="text-black/50 font-semibold">Price</p>
-                <p>{formatPrice(listing?.price)}</p>
+          
+          {/* Contact and Request Status */}
+          <div className="flex gap-8 py-4 border-b border-b-black/20 text-xs">
+            <div className="flex flex-col gap-3 flex-1">
+              <div className="flex flex-col gap-1">
+                <p className="text-black/50 font-semibold">Phone</p>
+                <p className="text-black">{userData?.phone || listing?.phone || "N/A"}</p>
               </div>
-              <div className="flex flex-col flex-1 gap-1">
-                <p className="text-black/50 font-semibold">Request Date</p>
-                <p className="">{formatDate(listing?.createdAt)}</p>
-              </div>
-            </div>
-            <div className="flex justify-between">
-              <div className="flex flex-col flex-1 gap-1">
+              <div className="flex flex-col gap-1">
                 <p className="text-black/50 font-semibold">Status</p>
                 <div className="flex">
                   <div
-                    className={`py-[2px] px-3 gap-2 flex rounded-full items-center ${
+                    className={`py-[2px] px-3 gap-2 flex rounded-full items-center w-fit ${
                       status == "Approved"
-                        ? "bg-new-green/20 text-new-green"
+                        ? "bg-green-100 text-green-700"
                         : status == "Pending"
-                        ? "bg-new-yellow/20 text-new-yellow"
-                        : "bg-new-red/20 text-new-red"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-red-100 text-red-700"
                     } `}
                   >
-                    <p
-                      className={`h-[6px] w-[6px] rounded-full ${
+                    <div
+                      className={`h-2 w-2 rounded-full ${
                         status == "Approved"
-                          ? "bg-new-green text-new-green"
+                          ? "bg-green-600"
                           : status == "Pending"
-                          ? "bg-new-yellow text-new-yellow"
-                          : "bg-new-red text-new-red"
+                          ? "bg-yellow-600"
+                          : "bg-red-600"
                       }`}
                     />
-                    <p className=" rounded-full">{status}</p>
+                    <p className="rounded-full">{status}</p>
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col flex-1 gap-1">
-                <p className="text-black/50 font-semibold">Updated On</p>
-                <p>{formatDate(listing?.updatedAt)}</p>
+            </div>
+            <div className="flex flex-col gap-3 flex-1">
+              <div className="flex flex-col gap-1">
+                <p className="text-black/50 font-semibold">Request Date</p>
+                <p className="text-black">{formatDate(listing?.createdAt)}</p>
               </div>
+              {status === "Approved" && (
+                <div className="flex flex-col gap-1">
+                  <p className="text-black/50 font-semibold">Approved On</p>
+                  <p className="text-black">{formatDate(listing?.updatedAt)}</p>
+                </div>
+              )}
             </div>
           </div>
-          <div className="text-xs">
-            <div className="">
-              <p className="font-semibold text-lg ">
+          
+          {/* Listing Details */}
+          <div className="text-xs py-4">
+            <div className="mb-3">
+              <p className="font-bold text-lg text-black">
                 {listing?.title || "Property Details"}
               </p>
             </div>
             <div className="text-black/60 flex flex-col gap-2">
               <div className="flex items-center gap-2">
-                <p className="px-2 py-1 bg-new-black/10 rounded-md">
+                <div className="px-2 py-1 bg-black/10 rounded-md">
                   <DoorIcon />
-                </p>
+                </div>
                 <p>{listing?.description || "No description available"}</p>
               </div>
               <div className="flex items-center gap-2">
-                <p className="px-2 py-1 bg-new-black/10 rounded-md">
+                <div className="px-2 py-1 bg-black/10 rounded-md">
                   <DollarIcon />
-                </p>
-                <p>{formatPrice(listing?.price)}</p>
+                </div>
+                <p>{formatPrice(listing?.price)} Asking</p>
               </div>
               <div className="flex items-center gap-2">
-                <p className="px-2 py-1 bg-new-black/10 rounded-md">
+                <div className="px-2 py-1 bg-black/10 rounded-md">
                   <LocationIcon color="black" />
-                </p>
+                </div>
                 <p>{listing?.location || "Location not specified"}</p>
               </div>
             </div>
           </div>
+          
+          {/* Property Images */}
           <div className="flex gap-4 py-4">
             {listing?.imageUrls && listing.imageUrls.length > 0 ? (
               listing.imageUrls.slice(0, 3).map((imageUrl, index) => {
@@ -245,16 +280,16 @@ const DetailsModal = ({ onclose, status, listing }) => {
                         setShowImage(true);
                       }}
                       alt={`Property image ${index + 1}`}
-                      width={80}
-                      height={80}
+                      width={100}
+                      height={100}
                       src={imageUrl}
-                      className="object-cover rounded cursor-pointer"
+                      className="w-24 h-24 object-cover rounded cursor-pointer"
                     />
                   );
                 }
                 return (
-                  <div className="rounded-lg object-cover w-full h-24 bg-gray-200 flex items-center justify-center">
-                    <p>No image</p>
+                  <div key={index} className="w-24 h-24 bg-gray-200 rounded flex items-center justify-center">
+                    <p className="text-xs text-gray-500">No image</p>
                   </div>
                 );
               })
@@ -285,3 +320,4 @@ const DetailsModal = ({ onclose, status, listing }) => {
 };
 
 export default DetailsModal;
+
