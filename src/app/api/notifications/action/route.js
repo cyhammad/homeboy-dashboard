@@ -24,12 +24,15 @@ export async function POST(request) {
 
     const notificationData = notificationDoc.data();
 
+    // Support both old format (data.listingId) and new format (listingId)
+    const listingId = notificationData.listingId || notificationData.data?.listingId;
+
     // Create notification action record
     const actionData = {
       action,
       adminId,
       notificationId,
-      requestId: notificationData.data?.listingId || notificationId,
+      requestId: listingId || notificationId,
       requestType: notificationData.type || 'listing',
       status: action === 'approve' ? 'approved' : 'rejected',
       details: {
@@ -65,7 +68,7 @@ export async function POST(request) {
       // Determine target userId from the listing/inquiry owner when available
       let targetUserId = notificationData?.userId || notificationData?.data?.userId || '';
       try {
-        const listingIdToLookup = propertyId || notificationData?.data?.listingId;
+        const listingIdToLookup = propertyId || listingId || notificationData?.data?.listingId;
         if (listingIdToLookup) {
           const listingSnap = await adminDb.collection('listings').doc(listingIdToLookup).get();
           if (listingSnap.exists) {

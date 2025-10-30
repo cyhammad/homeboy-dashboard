@@ -6,6 +6,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useUserData, getUserInitials } from "@/hooks/useUserData";
+import { useListing } from "@/hooks/useListings";
 import { onForegroundMessage, showNotification } from "@/lib/fcm-client";
 import {
   DropdownMenu,
@@ -17,13 +18,22 @@ const NotificationItem = ({
   notification, 
   onNotificationClick, 
   onNotificationAction,
-  formatDate 
+  formatDate,
+  loadingNotifications = {}
 }) => {
-  const { userData, loading: userLoading } = useUserData(notification.userId);
+  // Use senderId for user data, fallback to userId
+  const userIdToFetch = notification.senderId || notification.userId;
+  const { userData, loading: userLoading } = useUserData(userIdToFetch);
+  
+  // Fetch listing data if listingId exists
+  const { listing, loading: listingLoading } = useListing(notification.listingId);
   
   const userImage = userData?.imageUrl;
   const userName = userData?.name || notification.data?.ownerName || "User";
   const initials = getUserInitials(userName);
+  
+  const isActionLoading = loadingNotifications[notification.id] || false;
+  const listingStatus = listing?.status;
 
   return (
     <div
@@ -62,29 +72,50 @@ const NotificationItem = ({
           {formatDate(notification.createdAt)}
         </p>
       </div>
-      {(!notification.data?.status || notification.data?.status === "pending") && (
-        <div
-          className="flex gap-1 ml-4 flex-shrink-0"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            onClick={() =>
-              onNotificationAction(notification.id, "reject")
-            }
-            className="px-4 py-2 rounded-sm text-white bg-red-500 cursor-pointer hover:bg-red-500/80 whitespace-nowrap text-xs"
-          >
-            Reject
-          </button>
-          <button
-            onClick={() =>
-              onNotificationAction(notification.id, "approve")
-            }
-            className="px-4 py-2 rounded-sm text-white bg-primary cursor-pointer hover:bg-primary/80 whitespace-nowrap text-xs"
-          >
-            Accept
-          </button>
-        </div>
-      )}
+      <div className="ml-4 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+        {listing && listingStatus === "pending" && !isActionLoading && (
+          <div className="flex gap-1">
+            <button
+              onClick={() =>
+                onNotificationAction(notification.id, "reject")
+              }
+              className="px-4 py-2 rounded-sm text-white bg-red-500 cursor-pointer hover:bg-red-500/80 whitespace-nowrap text-xs"
+            >
+              Reject
+            </button>
+            <button
+              onClick={() =>
+                onNotificationAction(notification.id, "approve")
+              }
+              className="px-4 py-2 rounded-sm text-white bg-primary cursor-pointer hover:bg-primary/80 whitespace-nowrap text-xs"
+            >
+              Accept
+            </button>
+          </div>
+        )}
+        {listing && listingStatus === "pending" && isActionLoading && (
+          <div className="flex items-center gap-2 px-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+            <span className="text-xs text-gray-600">Processing...</span>
+          </div>
+        )}
+        {listingStatus === "approved" && (
+          <div className="flex items-center gap-2 text-green-600">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="text-xs font-medium">Accepted</span>
+          </div>
+        )}
+        {listingStatus === "rejected" && (
+          <div className="flex items-center gap-2 text-red-600">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span className="text-xs font-medium">Rejected</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -94,10 +125,12 @@ const Header = () => {
   const router = useRouter();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [hasNewPush, setHasNewPush] = useState(false);
+  const [loadingNotifications, setLoadingNotifications] = useState({});
 
   // Show a dot if there are unseen notifications or we just received a push
   const adminNotifications = useMemo(() => {
-    return (notifications || []).filter((n) => n.userId === 'admin');
+    // Filter by recieverId for admin notifications, fallback to userId
+    return (notifications || []).filter((n) => n.recieverId === 'FsdBt8wB7Edku66IZaa0k5tqUsH3' || n.receiverId === 'FsdBt8wB7Edku66IZaa0k5tqUsH3' || n.userId === 'admin');
   }, [notifications]);
 
   const hasUnseen = useMemo(() => {
@@ -136,7 +169,36 @@ const Header = () => {
 
 
   const handleNotificationAction = async (notificationId, action) => {
+    // Set loading state
+    setLoadingNotifications(prev => ({ ...prev, [notificationId]: true }));
+    
     try {
+      // Get the notification to find listingId
+      const notification = adminNotifications.find(n => n.id === notificationId);
+      const listingId = notification?.listingId;
+
+      if (!listingId) {
+        console.error("No listingId found in notification");
+        setLoadingNotifications(prev => ({ ...prev, [notificationId]: false }));
+        return;
+      }
+
+      // Update listing status first
+      const listingResponse = await fetch(`/api/listings/${listingId}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: action === "approve" ? "approved" : "rejected",
+        }),
+      });
+
+      if (!listingResponse.ok) {
+        throw new Error("Failed to update listing status");
+      }
+
+      // Then update notification action
       const response = await fetch("/api/notifications/action", {
         method: "POST",
         headers: {
@@ -150,12 +212,15 @@ const Header = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to perform action");
+        throw new Error("Failed to perform notification action");
       }
 
-      console.log(`Notification ${action}ed successfully`);
+      console.log(`Listing ${action}d successfully`);
     } catch (error) {
       console.error("Error performing notification action:", error);
+    } finally {
+      // Clear loading state
+      setLoadingNotifications(prev => ({ ...prev, [notificationId]: false }));
     }
   };
 
@@ -252,6 +317,7 @@ const Header = () => {
                           onNotificationClick={handleNotificationClick}
                           onNotificationAction={handleNotificationAction}
                           formatDate={formatDate}
+                          loadingNotifications={loadingNotifications}
                         />
                       ))
                     )}
