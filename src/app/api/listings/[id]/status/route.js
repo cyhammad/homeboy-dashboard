@@ -128,7 +128,7 @@ export async function PATCH(request, { params }) {
           listingId: id,
           receiverId: receiverId,
           senderId: senderId || '',
-          isSeen: true,
+          isSeen: false,
           createdAt: now,
           updatedAt: now,
         };
