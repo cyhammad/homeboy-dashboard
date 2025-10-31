@@ -1,6 +1,6 @@
 import React from "react";
 import ArrowRight from "@/assets/icons/ArrowRight";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 import {
   Table,
   TableHeader,
@@ -23,89 +23,93 @@ const PendingTable = ({ listings = [], setShowModal }) => {
 
   const formatDate = (date) => {
     if (!date) return "N/A";
-    return new Date(date).toLocaleDateString('en-US', {
-      month: '2-digit',
-      day: '2-digit',
-      year: '2-digit'
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+      year: "2-digit",
     });
   };
 
   const formatPrice = (price) => {
     if (!price) return "N/A";
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
     }).format(price);
   };
 
   const getInitials = (title) => {
     if (!title) return "N/A";
-    return title.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
+    return title
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   const handleStatusChange = async (listingId, newStatus, listingTitle) => {
-    const actionText = newStatus === 'approved' ? 'approve' : 'reject';
-    const actionColor = newStatus === 'approved' ? '#10b981' : '#ef4444';
-    
+    const actionText = newStatus === "approved" ? "approve" : "reject";
+    const actionColor = newStatus === "approved" ? "#10b981" : "#ef4444";
+
     const result = await Swal.fire({
       title: `Are you sure you want to ${actionText} this listing?`,
       text: `"${listingTitle}" will be ${actionText}d and moved to the ${newStatus} section.`,
-      icon: 'warning',
+      icon: "warning",
       showCancelButton: true,
       confirmButtonColor: actionColor,
-      cancelButtonColor: '#6b7280',
+      cancelButtonColor: "#6b7280",
       confirmButtonText: `Yes, ${actionText} it!`,
-      cancelButtonText: 'Cancel',
-      reverseButtons: true
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
     });
 
     if (result.isConfirmed) {
       try {
         // Show loading state
         Swal.fire({
-          title: `${actionText.charAt(0).toUpperCase() + actionText.slice(1)}ing...`,
-          text: 'Please wait while we update the listing status.',
+          title: actionText === "approve" ? "Approving..." : "Rejecting...",
+          text: "Please wait while we update the listing status.",
           allowOutsideClick: false,
           allowEscapeKey: false,
           showConfirmButton: false,
           didOpen: () => {
             Swal.showLoading();
-          }
+          },
         });
 
         const response = await fetch(`/api/listings/${listingId}/status`, {
-          method: 'PATCH',
+          method: "PATCH",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ status: newStatus }),
         });
 
         if (!response.ok) {
-          throw new Error('Failed to update listing status');
+          throw new Error("Failed to update listing status");
         }
 
         const result = await response.json();
-        
+
         // Show success message
         Swal.fire({
-          title: 'Success!',
-          text: `Listing has been ${actionText}d successfully.`,
-          icon: 'success',
+          title: "Success!",
+          text: `Listing has been ${actionText === "approve" ? "approved" : "rejected"} successfully.`,
+          icon: "success",
           confirmButtonColor: actionColor,
           timer: 2000,
-          timerProgressBar: true
+          timerProgressBar: true,
         });
-        
       } catch (error) {
-        console.error('Error updating listing status:', error);
-        
+        console.error("Error updating listing status:", error);
+
         // Show error message
         Swal.fire({
-          title: 'Error!',
-          text: 'Failed to update listing status. Please try again.',
-          icon: 'error',
-          confirmButtonColor: '#ef4444'
+          title: "Error!",
+          text: "Failed to update listing status. Please try again.",
+          icon: "error",
+          confirmButtonColor: "#ef4444",
         });
       }
     }
@@ -155,14 +159,26 @@ const PendingTable = ({ listings = [], setShowModal }) => {
                 </TableCell>
                 <TableCell className="px-4 py-4">
                   <div className="flex gap-1">
-                    <div 
-                      onClick={() => handleStatusChange(listing.id, 'rejected', listing.title)}
+                    <div
+                      onClick={() =>
+                        handleStatusChange(
+                          listing.id,
+                          "rejected",
+                          listing.title
+                        )
+                      }
                       className="px-4 py-2 rounded-sm text-white bg-red-500 cursor-pointer hover:bg-red-500/80 whitespace-nowrap"
                     >
                       <p>Reject</p>
                     </div>
-                    <div 
-                      onClick={() => handleStatusChange(listing.id, 'approved', listing.title)}
+                    <div
+                      onClick={() =>
+                        handleStatusChange(
+                          listing.id,
+                          "approved",
+                          listing.title
+                        )
+                      }
                       className="px-4 py-2 rounded-sm text-white bg-primary cursor-pointer hover:bg-primary/80 whitespace-nowrap"
                     >
                       <p>Accept</p>
