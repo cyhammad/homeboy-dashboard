@@ -45,6 +45,7 @@ const CreateModal = ({ onclose, status }) => {
     price: "",
   });
   const [uploadedImages, setUploadedImages] = useState([]);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
 
   const handleInputChange = (field, value) => {
@@ -58,10 +59,12 @@ const CreateModal = ({ onclose, status }) => {
     const files = Array.from(e.target.files);
     const imageUrls = files.map((file) => URL.createObjectURL(file));
     setUploadedImages((prev) => [...prev, ...imageUrls]);
+    setUploadedFiles((prev) => [...prev, ...files]);
   };
 
   const removeImage = (index) => {
     setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
@@ -102,14 +105,42 @@ const CreateModal = ({ onclose, status }) => {
     });
 
     try {
+      // Upload images to Firebase Storage via API route
+      const userId = "admin";
+      const imageUrls = [];
+      
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        const file = uploadedFiles[i];
+        const timestamp = Date.now() + i; // Ensure unique timestamps
+        
+        // Upload via API route to get URL in phone app format
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', file);
+        uploadFormData.append('userId', userId);
+        uploadFormData.append('timestamp', timestamp.toString());
+        
+        const response = await fetch('/api/upload-image', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.details || errorData.error || 'Failed to upload image');
+        }
+        
+        const data = await response.json();
+        imageUrls.push(data.url);
+      }
+
       const listingData = {
         title: formData.title,
         description: formData.description,
         location: formData.location,
         price: parseFloat(formData.price),
         status: status?.toLowerCase() || "pending",
-        imageUrls: uploadedImages,
-        userId: "admin", // You might want to get this from auth context
+        imageUrls: imageUrls,
+        userId: userId,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         likedBy: [],
@@ -126,6 +157,7 @@ const CreateModal = ({ onclose, status }) => {
         price: "",
       });
       setUploadedImages([]);
+      setUploadedFiles([]);
 
       // Success message
       await Swal.fire({

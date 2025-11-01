@@ -39,6 +39,7 @@ export const useUserData = (userId) => {
             name: data.name || data.displayName || '',
             imageUrl: data.imageUrl || data.photoURL || '',
             email: data.email || '',
+            phone: data.phone || data.phoneNumber || data.phone_number || '',
           };
           
           // Cache the user data
