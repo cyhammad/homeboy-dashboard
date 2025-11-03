@@ -69,15 +69,15 @@ const DetailsTable = ({ listings = [], setShowModal }) => {
                 <TableCell className="px-4 py-4 whitespace-nowrap">
                   {listing.id.slice(0, 4).toUpperCase()}.
                 </TableCell>
-                <TableCell className="px-4 py-4">
-                  <div className="flex items-center gap-2">
+                <TableCell className="px-4 py-4 max-w-[300px]">
+                  <div className="flex items-center gap-2 min-w-0">
                     <p className="bg-primary rounded-full w-7 h-7 text-xs items-center text-white justify-center flex shrink-0">
                       {getInitials(listing.title)}
                     </p>
                     <p className="truncate">{listing.title || "Untitled"}</p>
                   </div>
                 </TableCell>
-                <TableCell className="px-4 py-4 whitespace-nowrap">
+                <TableCell className="px-4 py-4 max-w-[300px] truncate whitespace-nowrap">
                   {listing.location || "N/A"}
                 </TableCell>
                 <TableCell className="px-4 py-4 whitespace-nowrap">

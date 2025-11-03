@@ -57,18 +57,18 @@ const DetailsTable = ({ inquiries, setShowModal }) => {
               <TableCell className="text-[#7A7C7F] text-sm">
                 {index + 1}.
               </TableCell>
-              <TableCell className="text-[#7A7C7F] text-sm">
-                <div className="flex items-center gap-2">
-                  <p className="bg-primary rounded-full w-7 h-7 text-xs items-center text-white justify-center flex">
+              <TableCell className="text-[#7A7C7F] text-sm max-w-[300px]">
+                <div className="flex items-center gap-2 min-w-0">
+                  <p className="bg-primary rounded-full w-7 h-7 text-xs items-center text-white justify-center flex shrink-0">
                     {getInitials(inquiry.buyerName)}
                   </p>
-                  <p>{inquiry.buyerName || 'N/A'}</p>
+                  <p className="truncate">{inquiry.buyerName || 'N/A'}</p>
                 </div>
               </TableCell>
-              <TableCell className="text-[#7A7C7F] text-sm">
+              <TableCell className="text-[#7A7C7F] text-sm max-w-[300px] truncate">
                 {inquiry.buyerEmail || 'N/A'}
               </TableCell>
-              <TableCell className="text-[#7A7C7F] text-sm">
+              <TableCell className="text-[#7A7C7F] text-sm max-w-[300px] truncate">
                 {inquiry.buyerPhone || 'N/A'}
               </TableCell>
               <TableCell className="text-[#7A7C7F] text-sm">

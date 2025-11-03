@@ -1,7 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase-client";
+import { db, auth } from "@/lib/firebase-client";
+import { onAuthStateChanged } from "firebase/auth";
 import Image from "next/image";
 import Swal from "sweetalert2";
 
@@ -47,6 +48,20 @@ const CreateModal = ({ onclose, status }) => {
   const [uploadedImages, setUploadedImages] = useState([]);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  // Get current logged in user ID
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUserId(user.uid);
+      } else {
+        setCurrentUserId(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -87,6 +102,20 @@ const CreateModal = ({ onclose, status }) => {
       return;
     }
 
+    if (!currentUserId) {
+      // Close dialog first
+      onclose();
+
+      await Swal.fire({
+        title: "Authentication Error",
+        text: "You must be logged in to create a listing. Please log in and try again.",
+        icon: "error",
+        confirmButtonColor: "#ef4444",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
     setIsUploading(true);
 
     // Close dialog first
@@ -106,7 +135,7 @@ const CreateModal = ({ onclose, status }) => {
 
     try {
       // Upload images to Firebase Storage via API route
-      const userId = "admin";
+      const userId = currentUserId;
       const imageUrls = [];
       
       for (let i = 0; i < uploadedFiles.length; i++) {
@@ -142,7 +171,6 @@ const CreateModal = ({ onclose, status }) => {
         imageUrls: imageUrls,
         userId: userId,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
         likedBy: [],
         sharedBy: [],
       };
