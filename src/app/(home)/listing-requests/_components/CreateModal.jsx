@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase-client";
 import Image from "next/image";
 import Swal from "sweetalert2";
@@ -147,7 +147,12 @@ const CreateModal = ({ onclose, status }) => {
         sharedBy: [],
       };
 
-      await addDoc(collection(db, "listings"), listingData);
+      const docRef = await addDoc(collection(db, "listings"), listingData);
+      
+      // Add the document ID to the document itself
+      await updateDoc(docRef, {
+        id: docRef.id
+      });
 
       // Reset form
       setFormData({
