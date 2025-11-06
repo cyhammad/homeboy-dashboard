@@ -1,81 +1,14 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 import Graphs from "@/components/dashboard/Graph";
 import Card from "@/components/Card/Card";
-import { useAllListings } from "@/hooks/useListings";
-import { useAllInquiries } from "@/hooks/useInquiries";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 const Dashboard = () => {
-  const { listings, loading: listingsLoading } = useAllListings();
-  const { inquiries, loading: inquiriesLoading } = useAllInquiries();
+  const { dashboardData, listings, users, loading } = useDashboardData();
 
-  // Calculate dashboard metrics
-  const dashboardData = useMemo(() => {
-    if (listingsLoading || inquiriesLoading) {
-      return [
-        {
-          name: "Total Users",
-          amount: "Loading...",
-          percent: 0,
-          status: "up",
-        },
-        {
-          name: "Total Listings",
-          amount: "Loading...",
-          percent: 0,
-          status: "up",
-        },
-        {
-          name: "Inquiry Requests",
-          amount: "Loading...",
-          percent: 0,
-          status: "up",
-        }
-      ];
-    }
-
-    const totalListings = listings?.length || 0;
-    const totalInquiries = inquiries?.length || 0;
-    
-    // Calculate approved listings
-    const approvedListings = listings?.filter(listing => 
-      listing.status?.toLowerCase() === 'approved'
-    ).length || 0;
-    
-    // Calculate approved inquiries
-    const approvedInquiries = inquiries?.filter(inquiry => 
-      inquiry.status?.toLowerCase() === 'approved'
-    ).length || 0;
-
-    // Calculate growth percentages (mock data for now - you can implement real calculations)
-    const listingGrowth = totalListings > 0 ? Math.floor(Math.random() * 20) + 5 : 0;
-    const inquiryGrowth = totalInquiries > 0 ? Math.floor(Math.random() * 15) + 10 : 0;
-    const userGrowth = Math.floor(Math.random() * 30) + 10;
-
-    return [
-      {
-        name: "Total Users",
-        amount: "256", // This would come from a users collection if available
-        percent: userGrowth,
-        status: "up",
-      },
-      {
-        name: "Total Listings",
-        amount: totalListings.toString(),
-        percent: listingGrowth,
-        status: listingGrowth > 10 ? "up" : "down",
-      },
-      {
-        name: "Inquiry Requests",
-        amount: totalInquiries.toString(),
-        percent: inquiryGrowth,
-        status: inquiryGrowth > 10 ? "up" : "down",
-      }
-    ];
-  }, [listings, inquiries, listingsLoading, inquiriesLoading]);
-
-  if (listingsLoading || inquiriesLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen px-8 py-4 font-sora flex items-center justify-center">
         <div className="text-center">
@@ -108,7 +41,7 @@ const Dashboard = () => {
 
         {/* Graph Section */}
         <div className="py-4">
-          <Graphs listings={listings} inquiries={inquiries} />
+          <Graphs users={users} listings={listings} />
         </div>
       </div>
     </div>

@@ -11,31 +11,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// Mock data
-export const mockOverviewData = [
-  { name: "Jan", users: 10, inquiries: 5 },
-  { name: "Feb", users: 28, inquiries: 15 },
-  { name: "Mar", users: 20, inquiries: 25 },
-  { name: "Apr", users: 5, inquiries: 10 },
-  { name: "May", users: 22, inquiries: 20 },
-  { name: "Jun", users: 38, inquiries: 12 },
-  { name: "Jul", users: 20, inquiries: 5 },
-  { name: "Aug", users: 45, inquiries: 25 },
-  { name: "Sep", users: 30, inquiries: 15 },
-  { name: "Oct", users: 65, inquiries: 45 },
-  { name: "Nov", users: 65, inquiries: 45 },
-  { name: "Dec", users: 65, inquiries: 45 },
-];
-
-export const mockRevenueData = [
-  { name: "Sun", revenue: 150 },
-  { name: "Mon", revenue: 80 },
-  { name: "Tue", revenue: 250 },
-  { name: "Wed", revenue: 120 },
-  { name: "Thu", revenue: 50 },
-  { name: "Fri", revenue: 300 },
-  { name: "Sat", revenue: 90 },
-];
 
 const CustomOverviewTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
@@ -47,7 +22,7 @@ const CustomOverviewTooltip = ({ active, payload }) => {
         </p>
         <p className="flex items-center">
           <span className="w-2 h-2 rounded-full bg-[#27ABEB] mr-2"></span>
-          {`Inquiries: ${payload[1].value}`}
+          {`Listings: ${payload[1].value}`}
         </p>
       </div>
     );
@@ -55,13 +30,9 @@ const CustomOverviewTooltip = ({ active, payload }) => {
   return null;
 };
 
-const DashboardUI = ({ listings, inquiries }) => {
-  // Generate chart data from real listings and inquiries
+const DashboardUI = ({ users = [], listings = [] }) => {
+  // Generate chart data from real users and listings
   const overviewData = React.useMemo(() => {
-    if (!listings || !inquiries) {
-      return mockOverviewData;
-    }
-
     // Group data by month
     const currentDate = new Date();
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -70,38 +41,62 @@ const DashboardUI = ({ listings, inquiries }) => {
     
     // Initialize all months with 0
     for (let i = 0; i < 12; i++) {
-      monthlyData[months[i]] = { users: 0, inquiries: 0 };
+      monthlyData[months[i]] = { users: 0, listings: 0 };
+    }
+
+    // Process users data
+    if (Array.isArray(users)) {
+      users.forEach(user => {
+        if (user?.createdAt) {
+          try {
+            const date = user.createdAt instanceof Date ? user.createdAt : new Date(user.createdAt);
+            if (!isNaN(date.getTime())) {
+              const month = months[date.getMonth()];
+              if (monthlyData[month]) {
+                monthlyData[month].users += 1;
+              }
+            }
+          } catch (error) {
+            console.warn('Error processing user date:', error);
+          }
+        }
+      });
     }
 
     // Process listings data
-    listings.forEach(listing => {
-      if (listing.createdAt) {
-        const date = new Date(listing.createdAt);
-        const month = months[date.getMonth()];
-        if (monthlyData[month]) {
-          monthlyData[month].users += 1;
+    if (Array.isArray(listings)) {
+      listings.forEach(listing => {
+        if (listing?.createdAt) {
+          try {
+            const date = listing.createdAt instanceof Date ? listing.createdAt : new Date(listing.createdAt);
+            if (!isNaN(date.getTime())) {
+              const month = months[date.getMonth()];
+              if (monthlyData[month]) {
+                monthlyData[month].listings += 1;
+              }
+            }
+          } catch (error) {
+            console.warn('Error processing listing date:', error);
+          }
         }
-      }
-    });
-
-    // Process inquiries data
-    inquiries.forEach(inquiry => {
-      if (inquiry.requestedAt) {
-        const date = new Date(inquiry.requestedAt);
-        const month = months[date.getMonth()];
-        if (monthlyData[month]) {
-          monthlyData[month].inquiries += 1;
-        }
-      }
-    });
+      });
+    }
 
     // Convert to array format
     return months.map(month => ({
       name: month,
       users: monthlyData[month]?.users || 0,
-      inquiries: monthlyData[month]?.inquiries || 0,
+      listings: monthlyData[month]?.listings || 0,
     }));
-  }, [listings, inquiries]);
+  }, [users, listings]);
+
+  // Calculate max value for Y-axis domain
+  const maxValue = React.useMemo(() => {
+    const allValues = overviewData.flatMap(d => [d.users, d.listings]);
+    const max = Math.max(...allValues, 0);
+    // Round up to nearest 10, with minimum of 10
+    return Math.max(Math.ceil(max / 10) * 10, 10);
+  }, [overviewData]);
 
   return (
     <div>
@@ -141,8 +136,7 @@ const DashboardUI = ({ listings, inquiries }) => {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 12, fill: "#6b7280" }}
-                  domain={[0, 80]}
-                  ticks={[0, 25, 50, 75]}
+                  domain={[0, maxValue]}
                   dx={-10}
                 />
                 <Tooltip
@@ -163,7 +157,7 @@ const DashboardUI = ({ listings, inquiries }) => {
                 />
                 <Line
                   type="monotone"
-                  dataKey="inquiries"
+                  dataKey="listings"
                   stroke="#27ABEB"
                   strokeWidth={2.5}
                   dot={false}

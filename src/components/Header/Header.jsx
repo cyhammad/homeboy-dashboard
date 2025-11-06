@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useUserData, getUserInitials } from "@/hooks/useUserData";
 import { useListing } from "@/hooks/useListings";
 import { onForegroundMessage, showNotification } from "@/lib/fcm-client";
+import Swal from "sweetalert2";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -169,18 +170,100 @@ const Header = () => {
 
 
   const handleNotificationAction = async (notificationId, action) => {
+    // Get the notification once
+    const notification = adminNotifications.find(n => n.id === notificationId);
+    
+    if (!notification) {
+      console.error("Notification not found");
+      return;
+    }
+
+    const listingId = notification?.listingId;
+    if (!listingId) {
+      console.error("No listingId found in notification");
+      return;
+    }
+
+    // Close notification modal immediately
+    setIsNotificationOpen(false);
+
+    const actionText = action === "approve" ? "approve" : "reject";
+    const actionColor = action === "approve" ? "#10b981" : "#ef4444";
+    const listingTitle = notification?.data?.title || notification?.description?.split('"')[1] || "this listing";
+
+    // For rejections, first get the rejection reason
+    let rejectReason = null;
+    if (action === "reject") {
+      const reasonResult = await Swal.fire({
+        title: "Rejection Reason",
+        text: `Please provide a reason for rejecting "${listingTitle}"`,
+        input: "textarea",
+        inputLabel: "Rejection Reason",
+        inputPlaceholder: "Enter the reason for rejection...",
+        inputAttributes: {
+          "aria-label": "Rejection reason",
+        },
+        showCancelButton: true,
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: "Continue",
+        cancelButtonText: "Cancel",
+        inputValidator: (value) => {
+          if (!value || value.trim().length === 0) {
+            return "Please provide a rejection reason";
+          }
+          if (value.trim().length < 10) {
+            return "Rejection reason must be at least 10 characters";
+          }
+        },
+      });
+
+      if (!reasonResult.isConfirmed) {
+        return; // User cancelled, exit early
+      }
+
+      rejectReason = reasonResult.value.trim();
+    }
+
+    // Show confirmation dialog
+    const confirmResult = await Swal.fire({
+      title: `Are you sure you want to ${actionText} this listing?`,
+      text: `"${listingTitle}" will be ${actionText}d and moved to the ${action === "approve" ? "approved" : "rejected"} section.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: actionColor,
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: `Yes, ${actionText} it!`,
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+    });
+
+    if (!confirmResult.isConfirmed) {
+      return; // User cancelled confirmation
+    }
+
     // Set loading state
     setLoadingNotifications(prev => ({ ...prev, [notificationId]: true }));
     
     try {
-      // Get the notification to find listingId
-      const notification = adminNotifications.find(n => n.id === notificationId);
-      const listingId = notification?.listingId;
+      // Show loading Swal
+      Swal.fire({
+        title: actionText === "approve" ? "Approving..." : "Rejecting...",
+        text: "Please wait while we update the listing status.",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
 
-      if (!listingId) {
-        console.error("No listingId found in notification");
-        setLoadingNotifications(prev => ({ ...prev, [notificationId]: false }));
-        return;
+      // Prepare request body
+      const requestBody = {
+        status: action === "approve" ? "approved" : "rejected",
+      };
+      if (action === "reject" && rejectReason) {
+        requestBody.rejectReason = rejectReason;
       }
 
       // Update listing status first
@@ -189,9 +272,7 @@ const Header = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          status: action === "approve" ? "approved" : "rejected",
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!listingResponse.ok) {
@@ -215,9 +296,27 @@ const Header = () => {
         throw new Error("Failed to perform notification action");
       }
 
+      // Show success message
+      Swal.fire({
+        title: "Success!",
+        text: `Listing has been ${actionText === "approve" ? "approved" : "rejected"} successfully.`,
+        icon: "success",
+        confirmButtonColor: actionColor,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+
       console.log(`Listing ${action}d successfully`);
     } catch (error) {
       console.error("Error performing notification action:", error);
+
+      // Show error message
+      Swal.fire({
+        title: "Error!",
+        text: "Failed to update listing status. Please try again.",
+        icon: "error",
+        confirmButtonColor: "#ef4444",
+      });
     } finally {
       // Clear loading state
       setLoadingNotifications(prev => ({ ...prev, [notificationId]: false }));

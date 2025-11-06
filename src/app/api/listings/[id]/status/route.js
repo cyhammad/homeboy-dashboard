@@ -50,7 +50,7 @@ const getNotificationDescription = (listingTitle, status) => {
 export async function PATCH(request, { params }) {
   try {
     const { id } = await params;
-    const { status } = await request.json();
+    const { status, rejectReason } = await request.json();
 
     if (!id) {
       return NextResponse.json(
@@ -106,10 +106,17 @@ export async function PATCH(request, { params }) {
     }
 
     // Update the listing status
-    await listingRef.update({
+    const updateData = {
       status,
       updatedAt: new Date(),
-    });
+    };
+    
+    // Include rejectReason if provided (for rejected listings)
+    if (status === 'rejected' && rejectReason) {
+      updateData.rejectReason = rejectReason;
+    }
+    
+    await listingRef.update(updateData);
 
     console.log(`✅ Listing ${id} status updated to ${status}.`);
 
@@ -121,10 +128,16 @@ export async function PATCH(request, { params }) {
         const notificationId = randomUUID();
         const now = new Date();
         
+        // Build notification description with rejection reason if available
+        let notificationDescription = getNotificationDescription(listingData?.title || 'Unknown listing', status);
+        if (status === 'rejected' && rejectReason) {
+          notificationDescription += ` Reason: ${rejectReason}`;
+        }
+
         const notificationDoc = {
           id: notificationId,
           title: getNotificationTitle(status),
-          description: getNotificationDescription(listingData?.title || 'Unknown listing', status),
+          description: notificationDescription,
           listingId: id,
           receiverId: receiverId,
           senderId: senderId || '',
@@ -185,7 +198,12 @@ export async function PATCH(request, { params }) {
         if (token) {
           // Prepare notification message
           const notificationTitle = getNotificationTitle(status);
-          const notificationBody = getNotificationBody(listingData.title, status);
+          let notificationBody = getNotificationBody(listingData.title, status);
+          
+          // Include rejection reason in notification body if available
+          if (status === 'rejected' && rejectReason) {
+            notificationBody += ` Reason: ${rejectReason}`;
+          }
 
           const message = {
             token: token,
@@ -199,6 +217,7 @@ export async function PATCH(request, { params }) {
               status: status,
               title: listingData.title,
               timestamp: new Date().toISOString(),
+              ...(rejectReason && { rejectReason }),
             },
           };
 

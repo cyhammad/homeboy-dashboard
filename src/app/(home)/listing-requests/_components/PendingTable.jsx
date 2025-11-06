@@ -56,6 +56,41 @@ const PendingTable = ({ listings = [], setShowModal }) => {
     const actionText = newStatus === "approved" ? "approve" : "reject";
     const actionColor = newStatus === "approved" ? "#10b981" : "#ef4444";
 
+    // For rejections, first get the rejection reason
+    let rejectReason = null;
+    if (newStatus === "rejected") {
+      const reasonResult = await Swal.fire({
+        title: "Rejection Reason",
+        text: `Please provide a reason for rejecting "${listingTitle}"`,
+        input: "textarea",
+        inputLabel: "Rejection Reason",
+        inputPlaceholder: "Enter the reason for rejection...",
+        inputAttributes: {
+          "aria-label": "Rejection reason",
+        },
+        showCancelButton: true,
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: "Continue",
+        cancelButtonText: "Cancel",
+        inputValidator: (value) => {
+          if (!value || value.trim().length === 0) {
+            return "Please provide a rejection reason";
+          }
+          if (value.trim().length < 10) {
+            return "Rejection reason must be at least 10 characters";
+          }
+        },
+      });
+
+      if (!reasonResult.isConfirmed) {
+        return; // User cancelled, exit early
+      }
+
+      rejectReason = reasonResult.value.trim();
+    }
+
+    // Confirmation dialog
     const result = await Swal.fire({
       title: `Are you sure you want to ${actionText} this listing?`,
       text: `"${listingTitle}" will be ${actionText}d and moved to the ${newStatus} section.`,
@@ -82,12 +117,18 @@ const PendingTable = ({ listings = [], setShowModal }) => {
           },
         });
 
+        // Prepare request body
+        const requestBody = { status: newStatus };
+        if (newStatus === "rejected" && rejectReason) {
+          requestBody.rejectReason = rejectReason;
+        }
+
         const response = await fetch(`/api/listings/${listingId}/status`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ status: newStatus }),
+          body: JSON.stringify(requestBody),
         });
 
         if (!response.ok) {
