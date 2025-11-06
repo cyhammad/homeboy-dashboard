@@ -15,6 +15,10 @@ const CancelledTable = ({ listings = [], setShowModal }) => {
     "Title",
     "Location",
     "Price",
+    "Beds",
+    "Baths",
+    "Area",
+    "Condition",
     "Status",
     "Rejected Date",
     "Actions",
@@ -78,6 +82,18 @@ const CancelledTable = ({ listings = [], setShowModal }) => {
                 </TableCell>
                 <TableCell className="px-4 py-4 whitespace-nowrap">
                   {formatPrice(listing.price)}
+                </TableCell>
+                <TableCell className="px-4 py-4 whitespace-nowrap">
+                  {listing.bedCount || 0}
+                </TableCell>
+                <TableCell className="px-4 py-4 whitespace-nowrap">
+                  {listing.bathCount || 0}
+                </TableCell>
+                <TableCell className="px-4 py-4 whitespace-nowrap max-w-[300px] truncate">
+                  {listing.area ? `${listing.area.toLocaleString()} sq ft` : "N/A"}
+                </TableCell>
+                <TableCell className="px-4 py-4 whitespace-nowrap">
+                  {listing.propertyCondition ? `${listing.propertyCondition}/10` : "N/A"}
                 </TableCell>
                 <TableCell className="px-4 py-4">
                   <div className="py-[2px] px-3 gap-2 flex rounded-full items-center bg-new-red/20 text-new-red w-fit">

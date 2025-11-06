@@ -241,7 +241,7 @@ const DetailsModal = ({ onclose, status, listing }) => {
                 {listing?.title || "Property Details"}
               </p>
             </div>
-            <div className="text-black/60 flex flex-col gap-2">
+            <div className="text-black/60 grid grid-cols-2 gap-2">
               <div className="flex items-center gap-2">
                 <div className="px-2 py-1 bg-black/10 rounded-md">
                   <DoorIcon />
@@ -259,6 +259,30 @@ const DetailsModal = ({ onclose, status, listing }) => {
                   <LocationIcon color="black" />
                 </div>
                 <p>{listing?.location || "Location not specified"}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="px-2 py-1 bg-black/10 rounded-md">
+                  <DoorIcon />
+                </div>
+                <p>Bedrooms: {listing?.bedCount || 0}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="px-2 py-1 bg-black/10 rounded-md">
+                  <DoorIcon />
+                </div>
+                <p>Bathrooms: {listing?.bathCount || 0}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="px-2 py-1 bg-black/10 rounded-md">
+                  <DoorIcon />
+                </div>
+                <p>Area: {listing?.area ? `${listing.area.toLocaleString()} sq ft` : "N/A"}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="px-2 py-1 bg-black/10 rounded-md">
+                  <DoorIcon />
+                </div>
+                <p>Property Condition: {listing?.propertyCondition ? `${listing.propertyCondition}/10` : "N/A"}</p>
               </div>
             </div>
           </div>

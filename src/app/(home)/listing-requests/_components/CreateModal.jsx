@@ -44,6 +44,10 @@ const CreateModal = ({ onclose, status }) => {
     description: "",
     location: "",
     price: "",
+    bedCount: "",
+    bathCount: "",
+    area: "",
+    propertyCondition: "",
   });
   const [uploadedImages, setUploadedImages] = useState([]);
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -167,6 +171,10 @@ const CreateModal = ({ onclose, status }) => {
         description: formData.description,
         location: formData.location,
         price: parseFloat(formData.price),
+        bedCount: formData.bedCount ? parseInt(formData.bedCount) : 0,
+        bathCount: formData.bathCount ? parseInt(formData.bathCount) : 0,
+        area: formData.area ? parseFloat(formData.area) : 0,
+        propertyCondition: formData.propertyCondition ? parseFloat(formData.propertyCondition) : 0,
         status: status?.toLowerCase() || "pending",
         imageUrls: imageUrls,
         userId: userId,
@@ -188,6 +196,10 @@ const CreateModal = ({ onclose, status }) => {
         description: "",
         location: "",
         price: "",
+        bedCount: "",
+        bathCount: "",
+        area: "",
+        propertyCondition: "",
       });
       setUploadedImages([]);
       setUploadedFiles([]);
@@ -248,6 +260,34 @@ const CreateModal = ({ onclose, status }) => {
                 title="Asking Price"
                 value={formData.price}
                 onChange={(e) => handleInputChange("price", e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2">
+              <CustomInput
+                type="number"
+                title="Bed Count"
+                value={formData.bedCount}
+                onChange={(e) => handleInputChange("bedCount", e.target.value)}
+              />
+              <CustomInput
+                type="number"
+                title="Bath Count"
+                value={formData.bathCount}
+                onChange={(e) => handleInputChange("bathCount", e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2">
+              <CustomInput
+                type="number"
+                title="Area (sq ft)"
+                value={formData.area}
+                onChange={(e) => handleInputChange("area", e.target.value)}
+              />
+              <CustomInput
+                type="number"
+                title="Property Condition (1-10)"
+                value={formData.propertyCondition}
+                onChange={(e) => handleInputChange("propertyCondition", e.target.value)}
               />
             </div>
             <div>

@@ -16,6 +16,10 @@ const PendingTable = ({ listings = [], setShowModal }) => {
     "Title",
     "Location",
     "Price",
+    "Beds",
+    "Baths",
+    "Area",
+    "Condition",
     "Status",
     "Accept/Reject",
     "Actions",
@@ -150,6 +154,18 @@ const PendingTable = ({ listings = [], setShowModal }) => {
                 </TableCell>
                 <TableCell className="px-4 py-4 whitespace-nowrap">
                   {formatPrice(listing.price)}
+                </TableCell>
+                <TableCell className="px-4 py-4 whitespace-nowrap">
+                  {listing.bedCount || 0}
+                </TableCell>
+                <TableCell className="px-4 py-4 whitespace-nowrap">
+                  {listing.bathCount || 0}
+                </TableCell>
+                <TableCell className="px-4 py-4 whitespace-nowrap max-w-[300px] truncate">
+                  {listing.area ? `${listing.area.toLocaleString()} sq ft` : "N/A"}
+                </TableCell>
+                <TableCell className="px-4 py-4 whitespace-nowrap">
+                  {listing.propertyCondition ? `${listing.propertyCondition}/10` : "N/A"}
                 </TableCell>
                 <TableCell className="px-4 py-4">
                   <div className="py-[2px] h-6 px-3 gap-2 flex rounded-full items-center bg-new-yellow/20 text-new-yellow w-fit">
