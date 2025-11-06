@@ -196,9 +196,8 @@ const Header = () => {
     if (action === "reject") {
       const reasonResult = await Swal.fire({
         title: "Rejection Reason",
-        text: `Please provide a reason for rejecting "${listingTitle}"`,
+        text: `Please provide a reason for rejecting "${listingTitle}" (optional)`,
         input: "textarea",
-        inputLabel: "Rejection Reason",
         inputPlaceholder: "Enter the reason for rejection...",
         inputAttributes: {
           "aria-label": "Rejection reason",
@@ -206,39 +205,39 @@ const Header = () => {
         showCancelButton: true,
         confirmButtonColor: "#ef4444",
         cancelButtonColor: "#6b7280",
-        confirmButtonText: "Continue",
+        confirmButtonText: "Confirm",
         cancelButtonText: "Cancel",
-        inputValidator: (value) => {
-          if (!value || value.trim().length === 0) {
-            return "Please provide a rejection reason";
-          }
-          if (value.trim().length < 10) {
-            return "Rejection reason must be at least 10 characters";
-          }
-        },
       });
 
       if (!reasonResult.isConfirmed) {
         return; // User cancelled, exit early
       }
 
-      rejectReason = reasonResult.value.trim();
+      rejectReason = reasonResult.value?.trim() || null;
     }
 
-    // Show confirmation dialog
-    const confirmResult = await Swal.fire({
-      title: `Are you sure you want to ${actionText} this listing?`,
-      text: `"${listingTitle}" will be ${actionText}d and moved to the ${action === "approve" ? "approved" : "rejected"} section.`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: actionColor,
-      cancelButtonColor: "#6b7280",
-      confirmButtonText: `Yes, ${actionText} it!`,
-      cancelButtonText: "Cancel",
-      reverseButtons: true,
-    });
+    // Show confirmation dialog (only for approvals, rejections skip this)
+    let shouldProceed = false;
+    if (action === "reject") {
+      // For rejections, proceed directly after getting the reason
+      shouldProceed = true;
+    } else {
+      // For approvals, show confirmation dialog
+      const confirmResult = await Swal.fire({
+        title: `Are you sure you want to ${actionText} this listing?`,
+        text: `"${listingTitle}" will be ${actionText}d and moved to the approved section.`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: actionColor,
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: `Yes, ${actionText} it!`,
+        cancelButtonText: "Cancel",
+        reverseButtons: true,
+      });
+      shouldProceed = confirmResult.isConfirmed;
+    }
 
-    if (!confirmResult.isConfirmed) {
+    if (!shouldProceed) {
       return; // User cancelled confirmation
     }
 
