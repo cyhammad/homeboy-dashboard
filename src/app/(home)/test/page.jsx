@@ -103,7 +103,7 @@ const TestPage = () => {
         },
         body: JSON.stringify({
           title: 'Test Notification',
-          body: 'This is a test push notification from Homeboy Dashboard!',
+          body: 'This is a test push notification from Deal Swipe Dashboard!',
           data: {
             type: 'test',
             timestamp: new Date().toISOString(),
