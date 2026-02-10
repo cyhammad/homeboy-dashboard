@@ -74,7 +74,7 @@ const Sidebar = () => {
     <>
       <div className="fixed md:flex flex-1 h-screen w-40 md:w-60 flex-col gap-10 custom-shadow border-black/20 px-6 py-6 text-[#4D5154]">
         <div className="flex gap-2 items-center text-3xl font-medium py-3 border-b border-b-black/20">
-          <p className="text-xl font-semibold">LOGO</p>
+          <p className="text-xl font-semibold">Deal Swipe</p>
         </div>
         <div className="flex flex-col h-full justify-between">
           <div className="">
