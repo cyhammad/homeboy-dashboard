@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Homeboy",
-  description: "Homeboy is a platform for managing your homeboy business.",
+  title: "Deal Swipe",
+  description: "Deal Swipe is a platform for managing your homeboy business.",
 };
 
 export default function RootLayout({

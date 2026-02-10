@@ -4,13 +4,13 @@ importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compa
 
 // Initialize Firebase in service worker
 const firebaseConfig = {
-  apiKey: "AIzaSyCwgLYe6DDfIlL3E6itWV5NpW0YeMow95o",
-  authDomain: "homeboy-app-1705d.firebaseapp.com",
-  projectId: "homeboy-app-1705d",
-  storageBucket: "homeboy-app-1705d.appspot.com",
-  messagingSenderId: "848431761997",
-  appId: "1:848431761997:web:4b4259da07045a29926a04",
-  measurementId: "G-FWMNX9RCHY"
+  apiKey: "AIzaSyDGWZSXyS-WoGrWMLZd7i2qvDdKLEdgaeU",
+  authDomain: "dealswipe-b7309.firebaseapp.com",
+  projectId: "dealswipe-b7309",
+  storageBucket: "dealswipe-b7309.firebasestorage.app",
+  messagingSenderId: "650049465368",
+  appId: "1:650049465368:web:af9c3f6c56cf71c226276d",
+  measurementId: "G-P6XD8DVKRH"
 };
 
 console.log('Service Worker: Firebase config loaded', firebaseConfig);
@@ -31,7 +31,7 @@ messaging.onBackgroundMessage((payload) => {
     body: payload.notification.body,
     icon: '/favicon.ico',
     badge: '/favicon.ico',
-    tag: 'homeboy-notification',
+    tag: 'dealswipe-notification',
     data: payload.data,
     requireInteraction: true,
     silent: false
