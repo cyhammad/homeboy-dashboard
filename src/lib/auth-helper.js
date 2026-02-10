@@ -22,7 +22,6 @@ export function getFirebaseToken(request) {
     return token;
   }
 
-  // Try to get token from cookies
   const cookieHeader = request.headers.get('cookie');
   if (cookieHeader) {
     const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
