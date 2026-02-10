@@ -43,7 +43,7 @@ export async function POST(request) {
     const userRecord = await adminAuth.createUser({
       email,
       displayName: 'Super Admin',
-      photoURL: '',
+      // photoURL: '',
       emailVerified: false,
     });
 
